@@ -3,6 +3,7 @@
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
 #include <FL/Fl_Double_Window.H>
+#include <FL/Fl_PNG_Image.H>
 #include <FL/Fl_Box.H>
 #include <string>
 #include <math.h>
@@ -93,7 +94,6 @@ should not need to edit it.
 
 class Rectangle {
   Point center;
-  int color;
   int w, h;
   Fl_Color fillColor, frameColor;
  public:
@@ -135,6 +135,7 @@ Rectangle::Rectangle(Point center, int w, int h,
 void Rectangle::draw() {
   fl_draw_box(FL_FLAT_BOX, center.x-w/2, center.y-h/2, w, h, fillColor);
   fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
+  
 }
 
 void Rectangle::setFillColor(Fl_Color newFillColor) {
@@ -182,6 +183,37 @@ Cell::Cell(Point center, int w, int h):
 
 void Cell::draw() {
   r.draw();
+  switch (color)
+  {
+  case 1:
+    r.setFillColor(FL_RED);
+    break;
+  
+  case 2:
+    r.setFillColor(FL_GREEN);
+    break;
+  
+  case 3:
+    r.setFillColor(FL_BLUE);
+    
+    break;
+  
+  case 4:
+    r.setFillColor(FL_YELLOW);
+    break;
+  
+  case 5:
+    r.setFillColor(fl_rgb_color(255, 165, 0));
+    break;
+  
+  case 6:
+  r.setFillColor(fl_rgb_color(143, 0, 255));
+  break;
+  default:
+    break;
+  }
+  
+
 }
 
 void Cell::mouseMove(Point mouseLoc) {

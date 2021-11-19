@@ -1,4 +1,3 @@
 
 main: main.cpp
-	g++ main.cpp -o main -lfltk
-
+	g++ main.cpp -o main -lfltk 
