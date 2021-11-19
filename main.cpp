@@ -1,5 +1,5 @@
 //projet ldp candy crush
-//Test partie edem
+//Test partie edem portable
 
 
 int r = 4;
