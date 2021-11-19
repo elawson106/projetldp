@@ -15,6 +15,10 @@
 
 using namespace std;
 
+const int windowWidth = 500;
+const int windowHeight = 500;
+const double refreshPerSecond = 60;
+
 
 struct Point {
   int x, y;
@@ -93,7 +97,6 @@ should not need to edit it.
 
 class Rectangle {
   Point center;
-  int color;
   int w, h;
   Fl_Color fillColor, frameColor;
  public:
@@ -164,7 +167,6 @@ vraiables and call the methods of Cell
 
 class Cell {
   Rectangle r;
-  int color;
  public:
   // Constructor
   Cell(Point center, int w, int h);
@@ -177,8 +179,7 @@ class Cell {
 };
 
 Cell::Cell(Point center, int w, int h):
-  r(center, w, h, FL_BLACK, FL_WHITE),
-  color{rand()%6+1} {}
+  r(center, w, h, FL_BLACK, FL_WHITE) {}
 
 void Cell::draw() {
   r.draw();
@@ -228,10 +229,10 @@ class Canvas {
 };
 
 Canvas::Canvas() {
-  for (int x = 0; x<9; x++) {
+  for (int x = 0; x<10; x++) {
     cells.push_back({});
-    for (int y = 0; y<9; y++)
-      cells[x].push_back({{70*x+200, 70*y+100}, 60, 60});
+    for (int y = 0; y<10; y++)
+      cells[x].push_back({{50*x+25, 50*y+25}, 40, 40});
   }
 
 }
@@ -273,8 +274,8 @@ Do not edit!!!!
 class MainWindow : public Fl_Window {
   Canvas canvas;
  public:
-  MainWindow() : Fl_Window(500, 50, 1000, 1000, "Lab 3") {
-    Fl::add_timeout(1.0/60, Timer_CB, this);
+  MainWindow() : Fl_Window(500, 500, windowWidth, windowHeight, "Lab 3") {
+    Fl::add_timeout(1.0/refreshPerSecond, Timer_CB, this);
     resizable(this);
   }
   void draw() override {
@@ -298,7 +299,7 @@ class MainWindow : public Fl_Window {
   static void Timer_CB(void *userdata) {
     MainWindow *o = (MainWindow*) userdata;
     o->redraw();
-    Fl::repeat_timeout(1.0/60, Timer_CB, userdata);
+    Fl::repeat_timeout(1.0/refreshPerSecond, Timer_CB, userdata);
   }
 };
 
