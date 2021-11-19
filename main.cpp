@@ -261,6 +261,7 @@ class Canvas {
 
 Canvas::Canvas() {
   for (int x = 0; x<9; x++) {
+    int elem = 0;
     cells.push_back({});
     for (int y = 0; y<9; y++)
       cells[x].push_back({{70*x+200, 70*y+100}, 60, 60});
