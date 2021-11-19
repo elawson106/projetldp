@@ -12,6 +12,7 @@
 #include <vector>
 #include <iostream>
 #include <random>
+#include <fstream>
 #include <array>
 
 using namespace std;
@@ -165,10 +166,10 @@ vraiables and call the methods of Cell
 
 class Cell {
   Rectangle r;
-  int color;
+  int colore;
  public:
   // Constructor
-  Cell(Point center, int w, int h);
+  Cell(Point center, int w, int h, int color);
 
   // Methods that draw and handle events
   void draw();
@@ -177,13 +178,14 @@ class Cell {
 
 };
 
-Cell::Cell(Point center, int w, int h):
+Cell::Cell(Point center, int w, int h, int color):
   r(center, w, h, FL_BLACK, FL_WHITE),
-  color{rand()%6+1} {}
+  colore{color}
+   {}
 
 void Cell::draw() {
   r.draw();
-  switch (color)
+  switch (colore)
   {
   case 1:
     r.setFillColor(FL_RED);
@@ -260,12 +262,23 @@ class Canvas {
 };
 
 Canvas::Canvas() {
+  int elem = 0;
+  string niveau;
+  ifstream file;
+  file.open("niveaux/niveau1.txt");
+  getline(file, niveau);
   for (int x = 0; x<9; x++) {
-    int elem = 0;
     cells.push_back({});
-    for (int y = 0; y<9; y++)
-      cells[x].push_back({{70*x+200, 70*y+100}, 60, 60});
   }
+
+  
+  for (int y = 0; y<9; y++){
+    for (int x = 0; x<9; x++){
+    int carre = niveau[elem] - '0';
+    cells[x].push_back({{70*x+200, 70*y+100}, 60, 60,carre});
+    elem++;
+    }
+  } 
 
 }
 
