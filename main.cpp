@@ -125,7 +125,9 @@ class Rectangle {
 	int getHeight() {
 		return h;
 	}
+	void setCenter(Point c);
 	bool contains(Point p);
+	Fl_Box* getImage();
 	Point getCenter() {
 		return center;
 	}
@@ -170,9 +172,16 @@ void Rectangle::draw() {
 		}
 	}
 	img_box->image(png_img);
-	img_box->redraw();
-	fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
-
+	array<Point, 5> points{
+    Point{center.x-w/2, center.y-h/2},
+    Point{center.x-w/2, center.y+h/2},
+    Point{center.x+w/2, center.y+h/2},
+    Point{center.x+w/2, center.y-h/2},
+    Point{center.x-w/2, center.y-h/2}};
+	for (auto& point : points) {
+		fl_vertex(point.x, point.y);
+	}
+	//img_box->redraw();
 }
 
 void Rectangle::setFrameColor(Fl_Color newFrameColor) {
@@ -186,6 +195,14 @@ bool Rectangle::contains(Point p) {
 		p.y<center.y+h/2;
 }
 
+void Rectangle::setCenter(Point c){
+	center = c;
+}
+
+Fl_Box* Rectangle::getImage(){
+	return img_box;
+}
+
 
 /*--------------------------------------------------
 
@@ -194,7 +211,41 @@ Cell class.
 The Canvas class below will have cells as instance
 vraiables and call the methods of Cell
 --------------------------------------------------*/
+struct Translation {
+	Translation(Point p, Fl_Box* img_box, Point center) {
+		fl_push_matrix();
+		fl_translate(p.x, p.y);
+		cout << p.x << " - " << p.y << endl;
+ 		img_box->position(center.x-95/2, p.y -4 + center.y-95/2);
+		img_box->redraw();
+	}
+	~Translation() {
+		fl_pop_matrix();
+	}
+};
 
+class Cell;
+
+class Animation {
+ 	int countBounce = -155;
+	Cell *c;
+	bool isCompleted = False;
+	public:
+		enum AnimationType {bounce};
+		Animation(Cell *c);
+		void draw();
+		bool isComplete();
+		Animation::AnimationType type;
+};
+
+Animation::Animation(Cell *c):
+  c{c} {
+    type = bounce;
+  }
+
+bool Animation::isComplete(){
+  return isCompleted;
+}
 
 class Cell {
 	Rectangle r;
@@ -203,18 +254,22 @@ class Cell {
 
 	vector<Cell *> neighbors;
 
+	Animation *anim = nullptr;
+
 	public:
 	// Constructor
 	Cell(Point center, int w, int h, int color);
 
 	// Methods that draw and handle events
 	void draw();
+	void drawWithoutAnimation();
 	void mouseMove(Point mouseLoc);
 	void mouseClick(Point mouseLoc);
 	void addNeighbors(Cell &c);
 	vector<Cell *> getNeighbors();
 	void setStateSwitch(bool sw);
 	bool getStateSwitch();
+	Rectangle getRectangle();
 	void switchCell(Cell *c1, Cell *c2);
 
 };
@@ -223,8 +278,19 @@ Cell::Cell(Point center, int w, int h, int color):
 	r(center, w, h, FL_BLACK, color),
 	color{color}{}
 
-void Cell::draw() {
+void Cell::drawWithoutAnimation(){
 	r.draw();
+}
+
+void Cell::draw() {
+	if(anim){
+		anim->draw();
+		if(anim->isComplete()){
+			anim = nullptr;
+		}
+	}else{
+		drawWithoutAnimation();
+	}
 }
 
 void Cell::addNeighbors(Cell &c){
@@ -251,11 +317,19 @@ void Cell::mouseMove(Point mouseLoc) {
 	}
 }
 
+Rectangle Cell::getRectangle(){
+	return r;
+}
+
 
 void Cell::switchCell(Cell *c1, Cell *c2){
-	Cell *temp = c1;
-	c1 = c2;
-	c2 = temp;
+	Point temp = c1->r.getCenter();
+	Point temp1 = c2->r.getCenter();
+	swap(c1, c2);
+	c1->r.setCenter(temp);
+	c2->r.setCenter(temp1);
+	c1->setStateSwitch(false);
+	c2->setStateSwitch(false);
 }
 
 
@@ -267,9 +341,23 @@ void Cell::mouseClick(Point mouseLoc) {
 			setStateSwitch(True);
 			for(auto n: getNeighbors()){
 				if(n->getStateSwitch() == true && getStateSwitch() == true){
+					anim = new Animation(this);
+					n->anim = new Animation(n);
 					switchCell(this, n);
 				}
 			}
+		}
+	}
+}
+
+void Animation::draw(){
+	if(type == bounce){
+		countBounce++;
+		Translation t{{0, static_cast<int>(100*sin(countBounce/50.0))}, c->getRectangle().getImage(), c->getRectangle().getCenter()};
+		c->drawWithoutAnimation();
+		if(countBounce == 155){
+			isCompleted = True;
+			delete this;
 		}
 	}
 }
