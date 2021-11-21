@@ -182,6 +182,7 @@ void Rectangle::draw() {
 		fl_vertex(point.x, point.y);
 	}
 	//img_box->redraw();
+	fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
 }
 
 void Rectangle::setFrameColor(Fl_Color newFrameColor) {
@@ -212,11 +213,12 @@ The Canvas class below will have cells as instance
 vraiables and call the methods of Cell
 --------------------------------------------------*/
 struct Translation {
-	Translation(Point p, Fl_Box* img_box, Point center) {
+	Translation(Point p, Fl_Box* img_box, Point center, Rectangle r) {
 		fl_push_matrix();
 		fl_translate(p.x, p.y);
-		cout << p.x << " - " << p.y << endl;
- 		img_box->position(center.x-95/2, p.y -4 + center.y-95/2);
+		//cout << p.x << " - " << p.y << endl;
+ 		img_box->position(p.x + center.x-96/2, p.y + center.y-96/2);
+		r.setCenter({p.x + center.x-96/2, p.y + center.y-96/2});
 		img_box->redraw();
 	}
 	~Translation() {
@@ -227,20 +229,36 @@ struct Translation {
 class Cell;
 
 class Animation {
- 	int countBounce = -155;
+ 	int countBounce = 0;
 	Cell *c;
 	bool isCompleted = False;
 	public:
-		enum AnimationType {bounce};
-		Animation(Cell *c);
+		enum AnimationType {bounce, bounceLeft, bounceRight, bounceHi};
+		Animation(Cell *c, int an);
 		void draw();
 		bool isComplete();
-		Animation::AnimationType type;
+		AnimationType type;
 };
 
-Animation::Animation(Cell *c):
+Animation::Animation(Cell *c, int an):
   c{c} {
-    type = bounce;
+    switch (an)
+	{
+	case 1:
+		type = bounce;
+		break;
+	case 2:
+		type = bounceHi;
+		break;
+	case 3:
+		type = bounceLeft;
+		break;
+	case 4:
+		type = bounceRight;
+		break;
+	default:
+		break;
+	}
   }
 
 bool Animation::isComplete(){
@@ -283,6 +301,11 @@ void Cell::drawWithoutAnimation(){
 }
 
 void Cell::draw() {
+	if(getStateSwitch()){
+		r.setFrameColor(FL_GREEN);
+	}else{
+		r.setFrameColor(FL_RED);
+	}
 	if(anim){
 		anim->draw();
 		if(anim->isComplete()){
@@ -323,26 +346,43 @@ Rectangle Cell::getRectangle(){
 
 
 void Cell::switchCell(Cell *c1, Cell *c2){
-	Point temp = c1->r.getCenter();
-	Point temp1 = c2->r.getCenter();
-	swap(c1, c2);
-	c1->r.setCenter(temp);
-	c2->r.setCenter(temp1);
 	c1->setStateSwitch(false);
 	c2->setStateSwitch(false);
+	swap(c1, c2);
+	//c1->neighbors = c2->neighbors;
+	//c2->neighbors = *temp;
 }
 
 
 void Cell::mouseClick(Point mouseLoc) {
 	if(r.contains(mouseLoc)){
-		if(hasToBeSwitched == True){
+		if(getStateSwitch()){
 			setStateSwitch(False);
 		}else{
 			setStateSwitch(True);
+			cout << getNeighbors().size() << endl;
 			for(auto n: getNeighbors()){
 				if(n->getStateSwitch() == true && getStateSwitch() == true){
-					anim = new Animation(this);
-					n->anim = new Animation(n);
+					int px = this->getRectangle().getCenter().x;
+					int py = this->getRectangle().getCenter().y;
+					int px_ = n->getRectangle().getCenter().x;
+					int py_ = n->getRectangle().getCenter().y;
+					int diffx = px - px_;
+					int diffy = py - py_;
+					cout << px - px_ << " / " << py - py_ << endl;
+					if (diffx > 0){
+						anim = new Animation(this, 3);
+						n->anim = new Animation(n, 4);
+					}else if (diffx < 0){
+						anim = new Animation(this, 4);
+						n->anim = new Animation(n, 3);
+					}else if (diffy > 0){
+						anim = new Animation(this, 1);
+						n->anim = new Animation(n, 2);
+					}else{
+						anim = new Animation(this, 2);
+						n->anim = new Animation(n, 1);
+					}
 					switchCell(this, n);
 				}
 			}
@@ -352,10 +392,34 @@ void Cell::mouseClick(Point mouseLoc) {
 
 void Animation::draw(){
 	if(type == bounce){
-		countBounce++;
-		Translation t{{0, static_cast<int>(100*sin(countBounce/50.0))}, c->getRectangle().getImage(), c->getRectangle().getCenter()};
+		countBounce--;
+		Translation t{{0, countBounce}, c->getRectangle().getImage(), c->getRectangle().getCenter(), c->getRectangle()};
 		c->drawWithoutAnimation();
-		if(countBounce == 155){
+		if(countBounce == -100){
+			isCompleted = True;
+			delete this;
+		}
+	}else if (type == bounceLeft){
+		countBounce--;
+		Translation t{{countBounce, 0}, c->getRectangle().getImage(), c->getRectangle().getCenter(), c->getRectangle()};
+		c->drawWithoutAnimation();
+		if(countBounce == -96){
+			isCompleted = True;
+			delete this;
+		}
+	}else if (type == bounceRight){
+		countBounce++;
+		Translation t{{countBounce, 0}, c->getRectangle().getImage(), c->getRectangle().getCenter(), c->getRectangle()};
+		c->drawWithoutAnimation();
+		if(countBounce == 96){
+			isCompleted = True;
+			delete this;
+		}
+	}else if (type == bounceHi){
+		countBounce++;
+		Translation t{{0, countBounce}, c->getRectangle().getImage(), c->getRectangle().getCenter(), c->getRectangle()};
+		c->drawWithoutAnimation();
+		if(countBounce == 100){
 			isCompleted = True;
 			delete this;
 		}
@@ -391,6 +455,7 @@ class Canvas {
 	void mouseMove(Point mouseLoc);
 	void mouseClick(Point mouseLoc);
 	void keyPressed(int keyCode);
+	void actualizeNeighbors();
 };
 
 Canvas::Canvas() {
@@ -412,15 +477,19 @@ Canvas::Canvas() {
 		}
 	}
 
-	for (int x = 0; x < 9; x++){
-		for (int y = 0; y < 9; y++){
+	actualizeNeighbors();
+}
+
+void Canvas::actualizeNeighbors(){
+	for (int y = 0; y < 9; y++){
+		for (int x = 0; x < 9; x++){
 			Cell &c = cells[x][y];
-			if(x + 1 <= 9 && y + 1 <= 9){
+			if(x + 1 <= 8 && y + 1 <= 8){
 				c.addNeighbors(cells[x+1][y]);
 				c.addNeighbors(cells[x][y+1]);
-			}else if(x + 1 <= 9){
+			}else if(x + 1 <= 8){
 				c.addNeighbors(cells[x+1][y]);
-			}else if(y + 1 <= 9){
+			}else if(y + 1 <= 8){
 				c.addNeighbors(cells[x][y+1]);
 			}
 			
@@ -450,10 +519,19 @@ void Canvas::mouseMove(Point mouseLoc) {
 }
 
 void Canvas::mouseClick(Point mouseLoc) {
+	Cell* toSwitch = nullptr;
+	Cell* temp = nullptr;
 	for (auto &v: cells)
 		for (auto &c: v)
 			for (auto &c: v) {
 				c.mouseClick(mouseLoc);
+				if(c.getStateSwitch()){
+					if(toSwitch == nullptr){
+						toSwitch = &c;
+					}else{
+						swap(*toSwitch, c);
+					}
+				}
 			}
 }
 
