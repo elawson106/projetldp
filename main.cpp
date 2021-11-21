@@ -277,7 +277,7 @@ Canvas::Canvas() {
 	for (int y = 0; y<9; y++){
 		for (int x = 0; x<9; x++){
 			int carre = niveau[elem] - '0';
-			cells[x].push_back({{70*x+200, 70*y+100}, 60, 60,carre});
+			cells[x].push_back({{96*x+47, 96*y+97}, 95, 95,carre});
 			elem++;
 		}
 	} 
@@ -320,7 +320,7 @@ Do not edit!!!!
 class MainWindow : public Fl_Window {
 	Canvas canvas;
 	public:
-	MainWindow() : Fl_Window(500, 50, 1000, 1000, "Lab 3") {
+	MainWindow() : Fl_Window(500, 50, 863, 913, "Candy Crush") {
 		Fl::add_timeout(1.0/60, Timer_CB, this);
 		resizable(this);
 	}
