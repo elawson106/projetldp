@@ -98,14 +98,14 @@ class Rectangle {
 	Point center;
 	int w, h;
 	Fl_Box* img_box = new Fl_Box(center.x-w/2, center.y-h/2, w, h);
-	Fl_PNG_Image* img = new Fl_PNG_Image("tile000.png");
+	Fl_PNG_Image* png_img = nullptr;
+	int img_nbr;
 	Fl_Color fillColor, frameColor;
  	public:
   	Rectangle(Point center, int w, int h,
             Fl_Color frameColor = FL_BLACK,
-            Fl_Color fillColor = FL_WHITE);
+            int img_nbr = 0);
 	void draw();
-	void setFillColor(Fl_Color newFillColor);
 	Fl_Color getFillColor() {
 		return fillColor;
 	}
@@ -133,19 +133,46 @@ class Rectangle {
 
 Rectangle::Rectangle(Point center, int w, int h,
                      Fl_Color frameColor,
-                     Fl_Color fillColor):
-	center{center}, w{w}, h{h}, fillColor{fillColor}, frameColor{frameColor} {}
+                     int img_nbr):
+	center{center}, w{w}, h{h}, img_nbr{img_nbr}, frameColor{frameColor} {}
 
 void Rectangle::draw() {
 	//fl_draw_box(FL_FLAT_BOX, center.x-w/2, center.y-h/2, w, h, fillColor);
-	img_box->image(img);
+	if(png_img == nullptr){
+		switch (img_nbr)
+		{
+		case 1:
+			png_img = new Fl_PNG_Image("bonbon/tile000.png");
+			break;
+
+		case 2:
+			png_img = new Fl_PNG_Image("bonbon/tile001.png");
+			break;
+
+		case 3:
+			png_img = new Fl_PNG_Image("bonbon/tile002.png");
+			break;
+
+		case 4:
+			png_img = new Fl_PNG_Image("bonbon/tile003.png");
+			break;
+
+		case 5:
+			png_img = new Fl_PNG_Image("bonbon/tile004.png");
+			break;
+
+		case 6:
+			png_img = new Fl_PNG_Image("bonbon/tile005.png");
+			break;
+		
+		default:
+			break;
+		}
+	}
+	img_box->image(png_img);
 	img_box->redraw();
 	fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
 
-}
-
-void Rectangle::setFillColor(Fl_Color newFillColor) {
-	fillColor = newFillColor;
 }
 
 void Rectangle::setFrameColor(Fl_Color newFrameColor) {
@@ -172,6 +199,10 @@ vraiables and call the methods of Cell
 class Cell {
 	Rectangle r;
 	int color;
+	bool hasToBeSwitched = False;
+
+	vector<Cell *> neighbors;
+
 	public:
 	// Constructor
 	Cell(Point center, int w, int h, int color);
@@ -180,44 +211,36 @@ class Cell {
 	void draw();
 	void mouseMove(Point mouseLoc);
 	void mouseClick(Point mouseLoc);
+	void addNeighbors(Cell &c);
+	vector<Cell *> getNeighbors();
+	void setStateSwitch(bool sw);
+	bool getStateSwitch();
+	void switchCell(Cell *c1, Cell *c2);
 
 };
 
 Cell::Cell(Point center, int w, int h, int color):
-	r(center, w, h, FL_BLACK, FL_WHITE),
+	r(center, w, h, FL_BLACK, color),
 	color{color}{}
 
 void Cell::draw() {
-	switch (color)
-	{
-	case 1:
-		r.setFillColor(FL_RED);
-		break;
-    
-	case 2:
-		r.setFillColor(FL_GREEN);
-		break;
-    
-    case 3:
-		r.setFillColor(FL_BLUE);
-		break;
-    
-    case 4:
-		r.setFillColor(FL_YELLOW);
-		break;
-    
-    case 5:
-		r.setFillColor(fl_rgb_color(255, 165, 0));
-		break;
-    
-    case 6:
-		r.setFillColor(fl_rgb_color(143, 0, 255));
-		break;
-	
-	default:
-		break;
-	}
 	r.draw();
+}
+
+void Cell::addNeighbors(Cell &c){
+	neighbors.push_back(&c);
+}
+
+vector<Cell *> Cell::getNeighbors(){
+	return neighbors;
+}
+
+void Cell::setStateSwitch(bool sw){
+	hasToBeSwitched = sw;
+}
+
+bool Cell::getStateSwitch(){
+	return hasToBeSwitched;
 }
 
 void Cell::mouseMove(Point mouseLoc) {
@@ -229,7 +252,26 @@ void Cell::mouseMove(Point mouseLoc) {
 }
 
 
+void Cell::switchCell(Cell *c1, Cell *c2){
+	Cell *temp = c1;
+	c1 = c2;
+	c2 = temp;
+}
+
+
 void Cell::mouseClick(Point mouseLoc) {
+	if(r.contains(mouseLoc)){
+		if(hasToBeSwitched == True){
+			setStateSwitch(False);
+		}else{
+			setStateSwitch(True);
+			for(auto n: getNeighbors()){
+				if(n->getStateSwitch() == true && getStateSwitch() == true){
+					switchCell(this, n);
+				}
+			}
+		}
+	}
 }
 
 
@@ -280,6 +322,29 @@ Canvas::Canvas() {
 			cells[x].push_back({{96*x+47, 96*y+97}, 95, 95,carre});
 			elem++;
 		}
+	}
+
+	for (int x = 0; x < 9; x++){
+		for (int y = 0; y < 9; y++){
+			Cell &c = cells[x][y];
+			if(x + 1 <= 9 && y + 1 <= 9){
+				c.addNeighbors(cells[x+1][y]);
+				c.addNeighbors(cells[x][y+1]);
+			}else if(x + 1 <= 9){
+				c.addNeighbors(cells[x+1][y]);
+			}else if(y + 1 <= 9){
+				c.addNeighbors(cells[x][y+1]);
+			}
+			
+			if(x - 1 >= 0 && y - 1 >= 0){
+				c.addNeighbors(cells[x-1][y]);
+				c.addNeighbors(cells[x][y-1]);
+			}else if(x - 1 >= 0){
+				c.addNeighbors(cells[x-1][y]);
+			}else if(y - 1 >= 0){
+				c.addNeighbors(cells[x][y-1]);
+			}
+		}
 	} 
 }
 
@@ -299,7 +364,9 @@ void Canvas::mouseMove(Point mouseLoc) {
 void Canvas::mouseClick(Point mouseLoc) {
 	for (auto &v: cells)
 		for (auto &c: v)
-			for (auto &c: v) c.mouseClick(mouseLoc);
+			for (auto &c: v) {
+				c.mouseClick(mouseLoc);
+			}
 }
 
 void Canvas::keyPressed(int keyCode) {

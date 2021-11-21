@@ -9,6 +9,7 @@
                 "-g",
                 "${file}",
                 "-lfltk",
+				"-lfltk_images",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],
