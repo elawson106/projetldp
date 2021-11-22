@@ -230,7 +230,7 @@ class Cell {
     neighbors = newNeighbors;
   }
   void setX(int x){ ligne = x;}
-  void setY(int y){ colonne = y;}
+  void setY(int y){ colonne= y;}
   // getters
   bool isClicked(){return clicked;}
 
@@ -363,29 +363,44 @@ void Canvas::mouseMove(Point mouseLoc) {
 
 void Canvas::mouseClick(Point mouseLoc) {
     checkClicks();
-    for (auto &v: cells)
+    bool switched = False;
+    Point temp_P_C, temp_P_N;
+    int temp_x_C, temp_y_C, temp_x_N, temp_y_N;
+    for (auto &v: cells){
         for (auto &c: v){
             c.mouseClick(mouseLoc);
-            for (auto n : c.getNeighbors()){
+            for (auto &n : c.getNeighbors()){
                 if(c.isClicked() && n->isClicked()){
-                    Point tempC = c.getRect().getCenter(); 
-                    int temp_x_C = c.getX();
-                    int temp_y_C = c.getY();
-                    c.getRect().setCenter(n->getRect().getCenter());
-                    n->getRect().setCenter(tempC);
-                    swap(cells[c.getX()][c.getY()], cells[n->getX()][n->getY()]);// echange les 2 cells dans la liste cells
-                    updateNeighbors();
-                    c.setX(n->getX());
-                    c.setY(n->getY());
-                    n->setX(temp_x_C);
-                    n->setY(temp_y_C);
-                    resetClicks();
-                    
-                    printCells();
+                    switched = True;
+                    temp_P_C = c.getRect().getCenter(); 
+                    temp_P_N = n->getRect().getCenter(); 
+                    temp_x_C = c.getX();
+                    temp_y_C = c.getY();
+                    temp_x_N = n->getX();
+                    temp_y_N = n->getY();
                 }
             }
         }
-}
+    }
+    
+    if (switched)
+    {
+        cells[temp_x_C][temp_y_C].getRect().setCenter(temp_P_N);
+        cells[temp_x_N][temp_y_N].getRect().setCenter(temp_P_C);
+        swap(cells[temp_x_C][temp_y_C], cells[temp_x_N][temp_y_N]);// echange les 2 cells dans la liste cells
+        int ok;
+        cells[temp_x_N][temp_y_N].setX(temp_x_N);
+        cells[temp_x_N][temp_y_N].setY(temp_y_N);
+        cells[temp_x_C][temp_y_C].setX(temp_x_C);
+        cells[temp_x_C][temp_y_C].setY(temp_y_C);
+        updateNeighbors();
+        resetClicks();
+        printCells();
+    }
+    checkClicks();
+}  
+
+
 
 void Canvas::resetClicks(){
     for (auto &v: cells)
