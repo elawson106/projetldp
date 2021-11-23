@@ -32,8 +32,8 @@ struct Point {
 };
 
 struct ImageBonbon{
-	Fl_Box* b;
-	Fl_PNG_Image* img;
+	Fl_Box* box;
+	Fl_PNG_Image* png;
 };
 
 struct CTS {
@@ -133,7 +133,7 @@ class Rectangle {
 	//Fl_Box* img_box;
 	//Fl_PNG_Image* png_img = nullptr;
 
-	ImageBonbon ib;
+	ImageBonbon bonbon_image;
 
 	public:
 		Rectangle(Point center, int w, int h,
@@ -158,11 +158,11 @@ class Rectangle {
 			center = newC;
 	}
 	void setImageBox(Fl_Box* box){
-		ib.b = box;
+		bonbon_image.box = box;
 	}
 
 	void setImagePng(Fl_PNG_Image* png){
-		ib.img = png;
+		bonbon_image.png = png;
 	}
   //getters
 	int getWidth() {
@@ -175,11 +175,11 @@ class Rectangle {
 		return center;
 	}
 	Fl_Box* getImageBox(){
-		return ib.b;
+		return bonbon_image.box;
 	}
 
 	Fl_PNG_Image* getImagePng(){
-		return ib.img;
+		return bonbon_image.png;
 	}
 	//others
 	void init();
@@ -223,15 +223,15 @@ void Rectangle::init(){
 		default:
 			break;
 		}
-	ib = {new Fl_Box(center.x-w/2, center.y-h/2, w, h), png_img};
-	ib.b->image(png_img);
+	bonbon_image = {new Fl_Box(center.x-w/2, center.y-h/2, w, h), png_img};
+	bonbon_image.box->image(png_img);
 }
 
 void Rectangle::draw() {    
     //fl_draw_box(FL_FLAT_BOX, center.x-w/2, center.y-h/2, w, h, fillColor);
     fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
     Text(to_string(id), {center.x + 30, center.y + 30}).draw();
-	ib.b->redraw();
+	bonbon_image.box->redraw();
 }
 
 void Rectangle::setFillColor(Fl_Color newFillColor) {
@@ -446,22 +446,27 @@ void Canvas::mouseClick(Point mouseLoc) {
         cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
 
 		swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);// echange les 2 cells dans la liste cells
+
+		//Cell 1
         
-        cells[cts.coord_2.x][cts.coord_2.y].setX(cts.coord_2.x);
-        cells[cts.coord_2.x][cts.coord_2.y].setY(cts.coord_2.y);
         cells[cts.coord_1.x][cts.coord_1.y].setX(cts.coord_1.x);
         cells[cts.coord_1.x][cts.coord_1.y].setY(cts.coord_1.y);
 
-		cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBox(cts.img_2.b);
-        cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBox(cts.img_1.b);
-		
-		cells[cts.coord_1.x][cts.coord_1.y].getRect().setImagePng(cts.img_2.img);
-        cells[cts.coord_2.x][cts.coord_2.y].getRect().setImagePng(cts.img_1.img);
-		
-        cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
-        cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
+		cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBox(cts.img_2.box);
+		cells[cts.coord_1.x][cts.coord_1.y].getRect().setImagePng(cts.img_2.png);
+		cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
 
 		cells[cts.coord_1.x][cts.coord_1.y].setTypeColor(cts.type_2);
+
+		//Cell 2
+
+		cells[cts.coord_2.x][cts.coord_2.y].setX(cts.coord_2.x);
+        cells[cts.coord_2.x][cts.coord_2.y].setY(cts.coord_2.y);
+
+        cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBox(cts.img_1.box);
+        cells[cts.coord_2.x][cts.coord_2.y].getRect().setImagePng(cts.img_1.png);
+        cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
+
 		cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
 
         updateNeighbors();
