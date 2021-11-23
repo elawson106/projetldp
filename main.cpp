@@ -123,64 +123,68 @@ should not need to edit it.
 --------------------------------------------------*/
 
 class Rectangle {
-  Point center;
-  int w, h, id, b_type;
-  Fl_Color fillColor;
-  Fl_Color frameColor = FL_BLACK;
+	Point center;
+	
+	int w, h, id, b_type;
+	
+	Fl_Color fillColor;
+	Fl_Color frameColor = FL_BLACK;
 
-  Fl_Box* img_box = new Fl_Box(center.x-w/2, center.y-h/2, w, h);
-  Fl_PNG_Image* png_img = nullptr;
+	//Fl_Box* img_box;
+	//Fl_PNG_Image* png_img = nullptr;
 
- public:
-  Rectangle(Point center, int w, int h,
+	ImageBonbon ib;
+
+	public:
+		Rectangle(Point center, int w, int h,
             int id, int b_type);
 
-  //setters
-  void setFillColor(Fl_Color newFillColor);
-    Fl_Color getFillColor() {
-    return fillColor;
-  }
-  void setFrameColor(Fl_Color newFrameColor);
-    Fl_Color getFrameColor() {
-    return frameColor;
-  }
-  void setWidth(int neww) {
-    w = neww;
-  }
-  void setHeight(int newh) {
-    h = newh;
-  }
-  void setCenter(Point newC){
-        center = newC;
-  }
-  void setImageBox(Fl_Box* box){
-	  img_box = box;
-  }
+	//setters
+	void setFillColor(Fl_Color newFillColor);
+		Fl_Color getFillColor() {
+		return fillColor;
+	}
+	void setFrameColor(Fl_Color newFrameColor);
+		Fl_Color getFrameColor() {
+		return frameColor;
+	}
+	void setWidth(int neww) {
+		w = neww;
+	}
+	void setHeight(int newh) {
+		h = newh;
+	}
+	void setCenter(Point newC){
+			center = newC;
+	}
+	void setImageBox(Fl_Box* box){
+		ib.b = box;
+	}
 
-  void setImagePng(Fl_PNG_Image* png){
-	  png_img = png;
-  }
+	void setImagePng(Fl_PNG_Image* png){
+		ib.img = png;
+	}
   //getters
-  int getWidth() {
-    return w;
-  }
-  int getHeight() {
-    return h;
-  }
-  Point getCenter() {
-    return center;
-  }
-  Fl_Box* getImageBox(){
-	  return img_box;
-  }
+	int getWidth() {
+		return w;
+	}
+	int getHeight() {
+		return h;
+	}
+	Point getCenter() {
+		return center;
+	}
+	Fl_Box* getImageBox(){
+		return ib.b;
+	}
 
-  Fl_PNG_Image* getImagePng(){
-	  return png_img;
-  }
-  //others
-  void init();
-  void draw();
-  bool contains(Point p);
+	Fl_PNG_Image* getImagePng(){
+		return ib.img;
+	}
+	//others
+	void init();
+	void draw();
+	bool contains(Point p);
 };
 
 Rectangle::Rectangle(Point center, int w, int h,
@@ -189,6 +193,7 @@ Rectangle::Rectangle(Point center, int w, int h,
                      {init();}
 
 void Rectangle::init(){
+	Fl_PNG_Image* png_img;
 		switch (b_type)
 		{
 		case 1:
@@ -218,14 +223,15 @@ void Rectangle::init(){
 		default:
 			break;
 		}
-	img_box->image(png_img);
+	ib = {new Fl_Box(center.x-w/2, center.y-h/2, w, h), png_img};
+	ib.b->image(png_img);
 }
 
 void Rectangle::draw() {    
     //fl_draw_box(FL_FLAT_BOX, center.x-w/2, center.y-h/2, w, h, fillColor);
     fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
     Text(to_string(id), {center.x + 30, center.y + 30}).draw();
-	img_box->redraw();
+	ib.b->redraw();
 }
 
 void Rectangle::setFillColor(Fl_Color newFillColor) {
@@ -256,44 +262,44 @@ vraiables and call the methods of Cell
 
 
 class Cell {
-  Rectangle r;
-  int color;
-  int id, ligne, colonne;
-  bool clicked = False;
-  vector<Cell *> neighbors;
- public:
-  // Constructor
-  Cell(Point center, int w, int h, int color, int id, int ligne, int colonne);
-  //Setters
-  void setclicked(bool value){
-      clicked = value;
-  }
-  void setNeighbors(const vector<Cell *> newNeighbors) {
-    neighbors = newNeighbors;
-  }
+	Rectangle r;
+	int color;
+	int id, ligne, colonne;
+	bool clicked = False;
+	vector<Cell *> neighbors;
+	public:
+	// Constructor
+	Cell(Point center, int w, int h, int color, int id, int ligne, int colonne);
+	//Setters
+	void setclicked(bool value){
+		clicked = value;
+	}
+	void setNeighbors(const vector<Cell *> newNeighbors) {
+		neighbors = newNeighbors;
+	}
 
-  void setTypeColor(int col){color = col;}
-  void setX(int x){ ligne = x;}
-  void setY(int y){ colonne= y;}
-  // getters
-  bool isClicked(){return clicked;}
+	void setTypeColor(int col){color = col;}
+	void setX(int x){ ligne = x;}
+	void setY(int y){ colonne= y;}
+	// getters
+	bool isClicked(){return clicked;}
 
-  vector<Cell *> getNeighbors(){return neighbors;}
+	vector<Cell *> getNeighbors(){return neighbors;}
 
-  Rectangle &getRect(){return r;}
+	Rectangle &getRect(){return r;}
 
-  int getX(){return ligne;}
+	int getX(){return ligne;}
 
-  int getY(){return colonne;}
+	int getY(){return colonne;}
 
-  int getId(){return id;}
+	int getId(){return id;}
 
-  int getTypeColor(){return color;}
+	int getTypeColor(){return color;}
 
-  // Methods that draw and handle events
-  void draw();
-  void mouseMove(Point mouseLoc);
-  void mouseClick(Point mouseLoc);
+	// Methods that draw and handle events
+	void draw();
+	void mouseMove(Point mouseLoc);
+	void mouseClick(Point mouseLoc);
 
 };
 
@@ -357,20 +363,20 @@ elsewhere it will probably crash.
 
 
 class Canvas {
-  vector< vector<Cell> > cells;
- public:
-  Canvas();
-  void draw();
-  void resetClicks();
-  void checkClicks();
-  void mouseMove(Point mouseLoc);
-  void mouseClick(Point mouseLoc);
-  void keyPressed(int keyCode);
-  void updateNeighbors();
-  void checkNeighbors();
-  void checkNeighborsX();
-  void checkNeighborsY();
-  void printCells();
+	vector< vector<Cell> > cells;
+	public:
+	Canvas();
+	void draw();
+	void resetClicks();
+	void checkClicks();
+	void mouseMove(Point mouseLoc);
+	void mouseClick(Point mouseLoc);
+	void keyPressed(int keyCode);
+	void updateNeighbors();
+	void checkNeighbors();
+	void checkNeighborsX();
+	void checkNeighborsY();
+	void printCells();
 };
 
 Canvas::Canvas() {
