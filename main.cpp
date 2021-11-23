@@ -517,57 +517,44 @@ class Recurrence {
     //others
     void add(Point newP); 
     bool isPouf();
-    int findB_type(int b_type);  
-
-
 };
 
 void Recurrence::add(Point newP){
-      // add si il n'esxiste, dans recu, pas de point avec la même variable x
-      bool inRecu = False;
-      for (auto &point : recu){
-        if (point.x == newP.x)
+      // add si le dernier point de recu a une couleur differente de celle de newP
+      bool lastRecu = False;
+      if (!(recu.empty())){
+        if (recu.back().x == newP.x)
         {
-          inRecu = True;
+          lastRecu = True;
         }
       }
-      if(!(inRecu)){
+      if(!(lastRecu)){
         recu.push_back(newP);
       }
-    }
+}
 bool Recurrence::isPouf(){
     bool pouf = false;
     for(auto &b_type : recu){
 			if(b_type.y >= 3){
-				cout << "Allignement horrizontal de " << b_type.y << " bonbons de couleur " << b_type.x << endl;
+				cout << "Allignement de " << b_type.y << " bonbons de couleur " << b_type.x << endl;
         pouf = True;
 			}
     }
     return pouf;
 }
-int Recurrence::findB_type(int b_type){
-  //return index of ellement which has b_type as .x
-  for (size_t i = 0; i < recu.size(); i++)
-  {
-    if (recu[i].x==b_type){
-        return i;
-      }
-  }
-   
-}
+
 void Canvas::checkNeighborsX(){
 	for(int x = 0; x < 9; x++){
 		int lastcolor = -1;
 		Recurrence recurrence;
 		for(int y = 0; y < 9; y++){
 			Cell &c = cells[x][y];
-			Point current = {c.getTypeColor(), 1};
-			recurrence.add(current);
-      int rec_index = recurrence.findB_type(current.x);
-			if (lastcolor == current.x){
-				recurrence.getVec()[rec_index].x++;
+			int current = c.getTypeColor();
+			recurrence.add({current, 1});
+			if (lastcolor == current){
+				recurrence.getVec().back().y++;
 			}else{
-				lastcolor = current.x;
+				lastcolor = current;
 			}
 		}
 		if (recurrence.isPouf()){cout<<"pouf sur horrizontal"<<endl;}
@@ -576,30 +563,22 @@ void Canvas::checkNeighborsX(){
 
 void Canvas::checkNeighborsY(){
 	for(int x = 0; x < 9; x++){
-		int counter = 1;
-		int counter_max = 1;
 		int lastcolor = -1;
 		Recurrence recurrence;
 		for(int y = 0; y < 9; y++){
 			Cell &c = cells[y][x];
-			Point current = {c.getTypeColor(), 1};
-			recurrence.add(current);
-			if (lastcolor == current.x){
-				counter++;
-				if(counter > counter_max){
-					counter_max = counter;
-				}
-        for(auto &b_type : recurrence.getVec())
-          if(current.x == b_type.x){b_type.y = counter_max;}
-        counter_max = 1;
+			int current = c.getTypeColor();
+			recurrence.add({current, 1});
+			if (lastcolor == current){
+				recurrence.getVec().back().y++;
 			}else{
-				lastcolor = current.x;
-				counter = 1;
+				lastcolor = current;
 			}
 		}
 		if (recurrence.isPouf()){cout<<"pouf sur vertical"<<endl;}
 	}
 }
+
 
 
 void Canvas::printCells(){
