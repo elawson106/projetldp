@@ -556,71 +556,49 @@ void Canvas::checkNeighborsX(){
 		Recurrence recurrence;
 		for(int y = 0; y < 9; y++){
 			Cell &c = cells[x][y];
-      
 			Point current = {c.getTypeColor(), 1};
 			recurrence.add(current);
-
 			if (lastcolor == current.x){
 				counter++;
 				if(counter > counter_max){
 					counter_max = counter;
-					
 				}
-				if (counter_max >= 3){
-					for(auto &b_type : recurrence.getVec()){
-						if(current.x == b_type.x){
-							b_type.y = counter_max;
-						}
-					}
-					counter_max = 1;
-				}
+        for(auto &b_type : recurrence.getVec())
+          if(current.x == b_type.x){b_type.y = counter_max;}
+        counter_max = 1;
 			}else{
 				lastcolor = current.x;
 				counter = 1;
 			}
 		}
-		if (recurrence.isPouf())
-    {
-      cout<<"pouf sur horrizontal"<<endl;
-    }
+		if (recurrence.isPouf()){cout<<"pouf sur horrizontal"<<endl;}
 	}
 }
 
 void Canvas::checkNeighborsY(){
-	for(int y = 0; y < 9; y++){
+	for(int x = 0; x < 9; x++){
 		int counter = 1;
 		int counter_max = 1;
 		int lastcolor = -1;
 		Recurrence recurrence;
-		for(int x = 0; x < 9; x++){
-			Cell &c = cells[x][y];
-      
+		for(int y = 0; y < 9; y++){
+			Cell &c = cells[y][x];
 			Point current = {c.getTypeColor(), 1};
 			recurrence.add(current);
-
 			if (lastcolor == current.x){
 				counter++;
 				if(counter > counter_max){
 					counter_max = counter;
-					
 				}
-				if (counter_max >= 3){
-					for(auto &b_type : recurrence.getVec()){
-						if(current.x == b_type.x){
-							b_type.y = counter_max;
-						}
-					}
-					counter_max = 1;
-				}
+        for(auto &b_type : recurrence.getVec())
+          if(current.x == b_type.x){b_type.y = counter_max;}
+        counter_max = 1;
 			}else{
 				lastcolor = current.x;
 				counter = 1;
 			}
 		}
-		if (recurrence.isPouf())
-    {
-      cout<<"pouf sur vertical"<<endl;
-    }
+		if (recurrence.isPouf()){cout<<"pouf sur vertical"<<endl;}
 	}
 }
 
