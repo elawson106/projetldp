@@ -31,6 +31,25 @@ struct Point {
 	int x, y;
 };
 
+struct ImageBonbon{
+	Fl_Box* box;
+	Fl_PNG_Image* png;
+};
+
+struct CTS {
+	Point center_1;
+	Point center_2;
+
+	ImageBonbon img_1;
+	ImageBonbon img_2;
+
+	Point coord_1;
+	Point coord_2;
+
+	int type_1;
+	int type_2;
+};
+
 /*--------------------------------------------------
 
 Text class.
@@ -394,30 +413,21 @@ void Canvas::mouseMove(Point mouseLoc) {
 void Canvas::mouseClick(Point mouseLoc) {
     checkClicks();
     bool switched = False;
-    Point temp_P_C, temp_P_N;
-	  Fl_Box* temp_imgbox_c;
-  	Fl_Box* temp_imgbox_n;
-    Fl_PNG_Image* temp_pngimg_c;
-	  Fl_PNG_Image* temp_pngimg_n;
-    int temp_x_C, temp_y_C, temp_x_N, temp_y_N, temp_col_n, temp_col_c;
+	  CTS cts;
     for (auto &v: cells){
         for (auto &c: v){
             c.mouseClick(mouseLoc);
             for (auto &n : c.getNeighbors()){
                 if(c.isClicked() && n->isClicked()){
                     switched = True;
-                    temp_P_C = c.getRect().getCenter(); 
-                    temp_P_N = n->getRect().getCenter(); 
-					          temp_pngimg_c = c.getRect().getImagePng();
-					          temp_pngimg_n = n->getRect().getImagePng();
-					          temp_imgbox_c = c.getRect().getImageBox();
-					          temp_imgbox_n = n->getRect().getImageBox();
-                    temp_x_C = c.getX();
-                    temp_y_C = c.getY();
-                    temp_x_N = n->getX();
-                    temp_y_N = n->getY();
-					          temp_col_n = n->getTypeColor();
-					          temp_col_c = c.getTypeColor();
+
+                    ImageBonbon ib_1 = {c.getRect().getImageBox(), c.getRect().getImagePng()};
+                    ImageBonbon ib_2 = {n->getRect().getImageBox(), n->getRect().getImagePng()};
+
+                    Point coord_1 = {c.getX(), c.getY()};
+				          	Point coord_2 = {n->getX(), n->getY()};
+
+				          	CTS cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
                 }
             }
         }
@@ -425,35 +435,40 @@ void Canvas::mouseClick(Point mouseLoc) {
     
     if (switched)
     {
-        //swap des centre de la cell(coordonées dans la fenêtre)
-        cells[temp_x_C][temp_y_C].getRect().setCenter(temp_P_N);
-        cells[temp_x_N][temp_y_N].getRect().setCenter(temp_P_C);
-        // swap des cell dans le vecteur cells
-		    swap(cells[temp_x_C][temp_y_C], cells[temp_x_N][temp_y_N]);// echange les 2 cells dans la liste cells
-        cells[temp_x_N][temp_y_N].setX(temp_x_N);
-        cells[temp_x_N][temp_y_N].setY(temp_y_N);
-        cells[temp_x_C][temp_y_C].setX(temp_x_C);
-        cells[temp_x_C][temp_y_C].setY(temp_y_C);
-        //swap des images 
-		    cells[temp_x_C][temp_y_C].getRect().setImageBox(temp_imgbox_n);
-        cells[temp_x_N][temp_y_N].getRect().setImageBox(temp_imgbox_c);
-		
-		    cells[temp_x_C][temp_y_C].getRect().setImagePng(temp_pngimg_n);
-        cells[temp_x_N][temp_y_N].getRect().setImagePng(temp_pngimg_c);
-		
-        cells[temp_x_C][temp_y_C].getRect().getImageBox()->position(temp_P_C.x-100/2, temp_P_C.y-100/2);
-        cells[temp_x_N][temp_y_N].getRect().getImageBox()->position(temp_P_N.x-100/2, temp_P_N.y-100/2);
+          cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
+          cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
 
-		    cells[temp_x_C][temp_y_C].setTypeColor(temp_col_n);
-		    cells[temp_x_N][temp_y_N].setTypeColor(temp_col_c);
+          swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);// echange les 2 cells dans la liste cells
 
-        updateNeighbors();
-        resetClicks();
-        checkNeighbors();
+          //Cell 1
+
+          cells[cts.coord_1.x][cts.coord_1.y].setX(cts.coord_1.x);
+          cells[cts.coord_1.x][cts.coord_1.y].setY(cts.coord_1.y);
+
+          cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBox(cts.img_2.box);
+          cells[cts.coord_1.x][cts.coord_1.y].getRect().setImagePng(cts.img_2.png);
+          cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
+
+          cells[cts.coord_1.x][cts.coord_1.y].setTypeColor(cts.type_2);
+
+          //Cell 2
+
+          cells[cts.coord_2.x][cts.coord_2.y].setX(cts.coord_2.x);
+          cells[cts.coord_2.x][cts.coord_2.y].setY(cts.coord_2.y);
+
+          cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBox(cts.img_1.box);
+          cells[cts.coord_2.x][cts.coord_2.y].getRect().setImagePng(cts.img_1.png);
+          cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
+
+          cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
+
+          updateNeighbors();
+          resetClicks();
+          printCells();
+          checkNeighbors();
     }
     checkClicks();
 }  
-
 
 
 void Canvas::resetClicks(){
