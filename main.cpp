@@ -34,6 +34,19 @@ struct Point {
 struct ImageBonbon{
 	Fl_Box* box;
 	Fl_PNG_Image* png;
+
+	Fl_Box* getBox() { return box; }
+	Fl_PNG_Image* getPNG() { return png; }
+};
+
+struct TemporaryCell{
+	Point center;
+
+	ImageBonbon img;
+
+	Point coord;
+
+	int type;
 };
 
 struct CTS {
@@ -224,14 +237,14 @@ void Rectangle::init(){
 			break;
 		}
 	bonbon_image = {new Fl_Box(center.x-w/2, center.y-h/2, w, h), png_img};
-	bonbon_image.box->image(png_img);
+	bonbon_image.getBox()->image(png_img);
 }
 
 void Rectangle::draw() {    
     //fl_draw_box(FL_FLAT_BOX, center.x-w/2, center.y-h/2, w, h, fillColor);
     fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
     Text(to_string(id), {center.x + 30, center.y + 30}).draw();
-	bonbon_image.box->redraw();
+	bonbon_image.getBox()->redraw();
 }
 
 void Rectangle::setFillColor(Fl_Color newFillColor) {
