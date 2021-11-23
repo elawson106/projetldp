@@ -500,10 +500,10 @@ void Canvas::updateNeighbors(){
 }
 
 void Canvas::checkNeighbors(){
-  cout<< "--------------Checking....----------"<< endl;
+  cout<< "--------------Start Checking----------"<< endl << endl;
 	checkNeighborsX();
 	checkNeighborsY();
-  cout<< "------------Check done -------------"<< endl << endl;
+  cout<< "-------------- Check done -------------"<< endl << endl;
 }
 class Recurrence {
     //TODO changer le point en structure de 2 int et 2 point (b_type, recurrence, Point(indice debut), Point(indice fin))
@@ -557,7 +557,7 @@ void Canvas::checkNeighborsX(){
 				lastcolor = current;
 			}
 		}
-		if (recurrence.isPouf()){cout<<"pouf sur horrizontal"<<endl;}
+		if (recurrence.isPouf()){cout<<"        Pouf sur horrizontal"<<endl<<endl;}
 	}
 }
 
@@ -575,7 +575,7 @@ void Canvas::checkNeighborsY(){
 				lastcolor = current;
 			}
 		}
-		if (recurrence.isPouf()){cout<<"pouf sur vertical"<<endl;}
+		if (recurrence.isPouf()){cout<<"        Pouf sur vertical"<<endl;}
 	}
 }
 
