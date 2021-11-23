@@ -521,7 +521,7 @@ void Canvas::checkNeighbors(){
   cout<< "-------------- Check done -------------"<< endl << endl;
 }
 class Recurrence {
-    //TODO changer le point en structure de 2 int et 2 point (b_type, recurrence, Point(indice debut), Point(indice fin))
+    //TODO changer le point en structure de 2 int et 2 point (b_type, recurrence, Point(indice debut dans cells), Point(indice fin dans cells))
     // isPouf() retourne les indice de debut et de fin de la chaine
     vector<Point> recu;
   public:
