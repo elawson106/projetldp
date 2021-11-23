@@ -252,6 +252,8 @@ class Cell {
   void setNeighbors(const vector<Cell *> newNeighbors) {
     neighbors = newNeighbors;
   }
+
+  void setTypeColor(int col){color = col;}
   void setX(int x){ ligne = x;}
   void setY(int y){ colonne= y;}
   // getters
@@ -266,6 +268,8 @@ class Cell {
   int getY(){return colonne;}
 
   int getId(){return id;}
+
+  int getTypeColor(){return color;}
 
   // Methods that draw and handle events
   void draw();
@@ -344,6 +348,7 @@ class Canvas {
   void mouseClick(Point mouseLoc);
   void keyPressed(int keyCode);
   void updateNeighbors();
+  void checkNeighbors();
   void printCells();
 };
 
@@ -393,7 +398,7 @@ void Canvas::mouseClick(Point mouseLoc) {
 	Fl_Box* temp_imgbox_n;
 	Fl_PNG_Image* temp_pngimg_c;
 	Fl_PNG_Image* temp_pngimg_n;
-    int temp_x_C, temp_y_C, temp_x_N, temp_y_N;
+    int temp_x_C, temp_y_C, temp_x_N, temp_y_N, temp_col_n, temp_col_c;
     for (auto &v: cells){
         for (auto &c: v){
             c.mouseClick(mouseLoc);
@@ -410,6 +415,8 @@ void Canvas::mouseClick(Point mouseLoc) {
                     temp_y_C = c.getY();
                     temp_x_N = n->getX();
                     temp_y_N = n->getY();
+					temp_col_n = n->getTypeColor();
+					temp_col_c = c.getTypeColor();
                 }
             }
         }
@@ -436,9 +443,13 @@ void Canvas::mouseClick(Point mouseLoc) {
         cells[temp_x_C][temp_y_C].getRect().getImageBox()->position(temp_P_C.x-100/2, temp_P_C.y-100/2);
         cells[temp_x_N][temp_y_N].getRect().getImageBox()->position(temp_P_N.x-100/2, temp_P_N.y-100/2);
 
+		cells[temp_x_C][temp_y_C].setTypeColor(temp_col_n);
+		cells[temp_x_N][temp_y_N].setTypeColor(temp_col_c);
+
         updateNeighbors();
         resetClicks();
         printCells();
+		checkNeighbors();
     }
     checkClicks();
 }  
@@ -483,6 +494,56 @@ void Canvas::updateNeighbors(){
                     }
             }
         }
+}
+
+void Canvas::checkNeighbors(){
+	for(int x = 0; x < 9; x++){
+		int counter = 1;
+		int counter_max = 1;
+		int lastcolor = -1;
+		for(int y = 0; y < 9; y++){
+			Cell &c = cells[x][y];
+			if (lastcolor == c.getTypeColor()){
+				counter++;
+				if(counter > counter_max){
+					counter_max = counter;
+					
+				}
+				if (counter_max >= 3){
+					cout << "Ligne gagnante en X - " << counter_max << endl;
+					counter_max = 1;
+				}
+			}else{
+				lastcolor = c.getTypeColor();
+				counter = 1;
+			}
+		}
+		cout << "X-----------------------" << endl;
+	}
+
+	for(int x = 0; x < 9; x++){
+		int counter = 1;
+		int counter_max = 1;
+		int lastcolor = -1;
+		for(int y = 0; y < 9; y++){
+			Cell &c = cells[y][x];
+			if (lastcolor == c.getTypeColor()){
+				counter++;
+				if(counter > counter_max){
+					counter_max = counter;
+					
+				}
+				if (counter_max >= 3){
+					cout << "Ligne gagnante en Y - " << counter_max << endl;
+					counter_max = 1;
+				}
+			}else{
+				lastcolor = c.getTypeColor();
+				counter = 1;
+			}
+		}
+		cout << "Y-----------------------" << endl;
+	}
 }
 
 void Canvas::printCells(){
