@@ -1,3 +1,11 @@
+/*
+
+Projet LDP2 CANDY CRUSH
+EDEM LAWSON 000499852
+MIGUEL LOZANO 
+
+*/
+
 
 // These should include everything you might use
 #include <FL/Fl.H>
@@ -82,6 +90,7 @@ void Text::draw() {
 	fl_draw(s.c_str(), center.x-width/2, center.y-fl_descent()+height/2);
 }
 
+
 /*--------------------------------------------------
 
 Rectangle class.
@@ -95,53 +104,73 @@ should not need to edit it.
 --------------------------------------------------*/
 
 class Rectangle {
-	Point center;
-	int w, h;
-	Fl_Box* img_box = new Fl_Box(center.x-w/2, center.y-h/2, w, h);
-	Fl_PNG_Image* png_img = nullptr;
-	int img_nbr;
-	Fl_Color fillColor, frameColor;
- 	public:
-  	Rectangle(Point center, int w, int h,
-            Fl_Color frameColor = FL_BLACK,
-            int img_nbr = 0);
-	void draw();
-	Fl_Color getFillColor() {
-		return fillColor;
-	}
-	void setFrameColor(Fl_Color newFrameColor);
-	Fl_Color getFrameColor() {
-    	return frameColor;
-	}
-	void setWidth(int neww) {
-		w = neww;
-	}
-	void setHeight(int newh) {
-		h = newh;
-	}
-	int getWidth() {
-		return w;
-	}
-	int getHeight() {
-		return h;
-	}
-	void setCenter(Point c);
-	bool contains(Point p);
-	Fl_Box* getImage();
-	Point getCenter() {
-		return center;
-	}
+  Point center;
+  int w, h, id, b_type;
+  Fl_Color fillColor;
+  Fl_Color frameColor = FL_BLACK;
+
+  Fl_Box* img_box = new Fl_Box(center.x-w/2, center.y-h/2, w, h);
+  Fl_PNG_Image* png_img = nullptr;
+
+ public:
+  Rectangle(Point center, int w, int h,
+            int id, int b_type);
+
+  //setters
+  void setFillColor(Fl_Color newFillColor);
+    Fl_Color getFillColor() {
+    return fillColor;
+  }
+  void setFrameColor(Fl_Color newFrameColor);
+    Fl_Color getFrameColor() {
+    return frameColor;
+  }
+  void setWidth(int neww) {
+    w = neww;
+  }
+  void setHeight(int newh) {
+    h = newh;
+  }
+  void setCenter(Point newC){
+        center = newC;
+  }
+  void setImageBox(Fl_Box* box){
+	  img_box = box;
+  }
+
+  void setImagePng(Fl_PNG_Image* png){
+	  png_img = png;
+  }
+  //getters
+  int getWidth() {
+    return w;
+  }
+  int getHeight() {
+    return h;
+  }
+  Point getCenter() {
+    return center;
+  }
+  Fl_Box* getImageBox(){
+	  return img_box;
+  }
+
+  Fl_PNG_Image* getImagePng(){
+	  return png_img;
+  }
+  //others
+  void init();
+  void draw();
+  bool contains(Point p);
 };
 
 Rectangle::Rectangle(Point center, int w, int h,
-                     Fl_Color frameColor,
-                     int img_nbr):
-	center{center}, w{w}, h{h}, img_nbr{img_nbr}, frameColor{frameColor} {}
+                     int id, int b_type):
+                     center{center}, w{w}, h{h}, id{id}, b_type{b_type}
+                     {init();}
 
-void Rectangle::draw() {
-	//fl_draw_box(FL_FLAT_BOX, center.x-w/2, center.y-h/2, w, h, fillColor);
-	if(png_img == nullptr){
-		switch (img_nbr)
+void Rectangle::init(){
+		switch (b_type)
 		{
 		case 1:
 			png_img = new Fl_PNG_Image("bonbon/tile000.png");
@@ -170,39 +199,32 @@ void Rectangle::draw() {
 		default:
 			break;
 		}
-	}
 	img_box->image(png_img);
-	array<Point, 5> points{
-    Point{center.x-w/2, center.y-h/2},
-    Point{center.x-w/2, center.y+h/2},
-    Point{center.x+w/2, center.y+h/2},
-    Point{center.x+w/2, center.y-h/2},
-    Point{center.x-w/2, center.y-h/2}};
-	for (auto& point : points) {
-		fl_vertex(point.x, point.y);
-	}
-	//img_box->redraw();
-	fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
+}
+
+void Rectangle::draw() {    
+    //fl_draw_box(FL_FLAT_BOX, center.x-w/2, center.y-h/2, w, h, fillColor);
+    fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
+    Text(to_string(id), {center.x + 30, center.y + 30}).draw();
+	img_box->redraw();
+}
+
+void Rectangle::setFillColor(Fl_Color newFillColor) {
+  fillColor = newFillColor;
 }
 
 void Rectangle::setFrameColor(Fl_Color newFrameColor) {
-	frameColor = newFrameColor;
+  frameColor = newFrameColor;
 }
 
 bool Rectangle::contains(Point p) {
-	return p.x>=center.x-w/2 &&
-		p.x<center.x+w/2 &&
-		p.y>=center.y-h/2 &&
-		p.y<center.y+h/2;
+  return p.x>=center.x-w/2 &&
+         p.x<center.x+w/2 &&
+         p.y>=center.y-h/2 &&
+         p.y<center.y+h/2;
 }
 
-void Rectangle::setCenter(Point c){
-	center = c;
-}
 
-Fl_Box* Rectangle::getImage(){
-	return img_box;
-}
 
 
 /*--------------------------------------------------
@@ -212,218 +234,86 @@ Cell class.
 The Canvas class below will have cells as instance
 vraiables and call the methods of Cell
 --------------------------------------------------*/
-struct Translation {
-	Translation(Point p, Fl_Box* img_box, Point center, Rectangle r) {
-		fl_push_matrix();
-		fl_translate(p.x, p.y);
-		//cout << p.x << " - " << p.y << endl;
- 		img_box->position(p.x + center.x-96/2, p.y + center.y-96/2);
-		r.setCenter({p.x + center.x-96/2, p.y + center.y-96/2});
-		img_box->redraw();
-	}
-	~Translation() {
-		fl_pop_matrix();
-	}
-};
 
-class Cell;
-
-class Animation {
- 	int countBounce = 0;
-	Cell *c;
-	bool isCompleted = False;
-	public:
-		enum AnimationType {bounce, bounceLeft, bounceRight, bounceHi};
-		Animation(Cell *c, int an);
-		void draw();
-		bool isComplete();
-		AnimationType type;
-};
-
-Animation::Animation(Cell *c, int an):
-  c{c} {
-    switch (an)
-	{
-	case 1:
-		type = bounce;
-		break;
-	case 2:
-		type = bounceHi;
-		break;
-	case 3:
-		type = bounceLeft;
-		break;
-	case 4:
-		type = bounceRight;
-		break;
-	default:
-		break;
-	}
-  }
-
-bool Animation::isComplete(){
-  return isCompleted;
-}
 
 class Cell {
-	Rectangle r;
-	int color;
-	bool hasToBeSwitched = False;
+  Rectangle r;
+  int color;
+  int id, ligne, colonne;
+  bool clicked = False;
+  vector<Cell *> neighbors;
+ public:
+  // Constructor
+  Cell(Point center, int w, int h, int color, int id, int ligne, int colonne);
+  //Setters
+  void setclicked(bool value){
+      clicked = value;
+  }
+  void setNeighbors(const vector<Cell *> newNeighbors) {
+    neighbors = newNeighbors;
+  }
 
-	vector<Cell *> neighbors;
+  void setTypeColor(int col){color = col;}
+  void setX(int x){ ligne = x;}
+  void setY(int y){ colonne= y;}
+  // getters
+  bool isClicked(){return clicked;}
 
-	Animation *anim = nullptr;
+  vector<Cell *> getNeighbors(){return neighbors;}
 
-	public:
-	// Constructor
-	Cell(Point center, int w, int h, int color);
+  Rectangle &getRect(){return r;}
 
-	// Methods that draw and handle events
-	void draw();
-	void drawWithoutAnimation();
-	void mouseMove(Point mouseLoc);
-	void mouseClick(Point mouseLoc);
-	void addNeighbors(Cell &c);
-	vector<Cell *> getNeighbors();
-	void setStateSwitch(bool sw);
-	bool getStateSwitch();
-	Rectangle getRectangle();
-	void switchCell(Cell *c1, Cell *c2);
+  int getX(){return ligne;}
+
+  int getY(){return colonne;}
+
+  int getId(){return id;}
+
+  int getTypeColor(){return color;}
+
+  // Methods that draw and handle events
+  void draw();
+  void mouseMove(Point mouseLoc);
+  void mouseClick(Point mouseLoc);
 
 };
 
-Cell::Cell(Point center, int w, int h, int color):
-	r(center, w, h, FL_BLACK, color),
-	color{color}{}
+Cell::Cell(Point center, int w, int h, int color, int id, int ligne, int colonne):
+	r(center, w, h,id, color),
+	color{color},
+	id{id},
+	ligne{ligne},
+	colonne{colonne}
+{}
 
-void Cell::drawWithoutAnimation(){
-	r.draw();
-}
 
 void Cell::draw() {
-	if(getStateSwitch()){
-		r.setFrameColor(FL_GREEN);
-	}else{
-		r.setFrameColor(FL_RED);
-	}
-	if(anim){
-		anim->draw();
-		if(anim->isComplete()){
-			anim = nullptr;
-		}
-	}else{
-		drawWithoutAnimation();
-	}
-}
-
-void Cell::addNeighbors(Cell &c){
-	neighbors.push_back(&c);
-}
-
-vector<Cell *> Cell::getNeighbors(){
-	return neighbors;
-}
-
-void Cell::setStateSwitch(bool sw){
-	hasToBeSwitched = sw;
-}
-
-bool Cell::getStateSwitch(){
-	return hasToBeSwitched;
+    if (clicked){
+        r.setFrameColor(FL_WHITE);
+    }
+    r.draw();
 }
 
 void Cell::mouseMove(Point mouseLoc) {
-	if (r.contains(mouseLoc)) {
-		r.setFrameColor(FL_RED);
-	} else {
-		r.setFrameColor(FL_BLACK);
-	}
-}
-
-Rectangle Cell::getRectangle(){
-	return r;
-}
-
-
-void Cell::switchCell(Cell *c1, Cell *c2){
-	c1->setStateSwitch(false);
-	c2->setStateSwitch(false);
-	swap(c1, c2);
-	//c1->neighbors = c2->neighbors;
-	//c2->neighbors = *temp;
+  if (r.contains(mouseLoc)) {
+    r.setFrameColor(FL_RED);
+  } else {
+    r.setFrameColor(FL_BLACK);
+  }
 }
 
 
 void Cell::mouseClick(Point mouseLoc) {
-	if(r.contains(mouseLoc)){
-		if(getStateSwitch()){
-			setStateSwitch(False);
-		}else{
-			setStateSwitch(True);
-			cout << getNeighbors().size() << endl;
-			for(auto n: getNeighbors()){
-				if(n->getStateSwitch() == true && getStateSwitch() == true){
-					int px = this->getRectangle().getCenter().x;
-					int py = this->getRectangle().getCenter().y;
-					int px_ = n->getRectangle().getCenter().x;
-					int py_ = n->getRectangle().getCenter().y;
-					int diffx = px - px_;
-					int diffy = py - py_;
-					cout << px - px_ << " / " << py - py_ << endl;
-					if (diffx > 0){
-						anim = new Animation(this, 3);
-						n->anim = new Animation(n, 4);
-					}else if (diffx < 0){
-						anim = new Animation(this, 4);
-						n->anim = new Animation(n, 3);
-					}else if (diffy > 0){
-						anim = new Animation(this, 1);
-						n->anim = new Animation(n, 2);
-					}else{
-						anim = new Animation(this, 2);
-						n->anim = new Animation(n, 1);
-					}
-					switchCell(this, n);
-				}
-			}
-		}
-	}
-}
-
-void Animation::draw(){
-	if(type == bounce){
-		countBounce--;
-		Translation t{{0, countBounce}, c->getRectangle().getImage(), c->getRectangle().getCenter(), c->getRectangle()};
-		c->drawWithoutAnimation();
-		if(countBounce == -100){
-			isCompleted = True;
-			delete this;
-		}
-	}else if (type == bounceLeft){
-		countBounce--;
-		Translation t{{countBounce, 0}, c->getRectangle().getImage(), c->getRectangle().getCenter(), c->getRectangle()};
-		c->drawWithoutAnimation();
-		if(countBounce == -96){
-			isCompleted = True;
-			delete this;
-		}
-	}else if (type == bounceRight){
-		countBounce++;
-		Translation t{{countBounce, 0}, c->getRectangle().getImage(), c->getRectangle().getCenter(), c->getRectangle()};
-		c->drawWithoutAnimation();
-		if(countBounce == 96){
-			isCompleted = True;
-			delete this;
-		}
-	}else if (type == bounceHi){
-		countBounce++;
-		Translation t{{0, countBounce}, c->getRectangle().getImage(), c->getRectangle().getCenter(), c->getRectangle()};
-		c->drawWithoutAnimation();
-		if(countBounce == 100){
-			isCompleted = True;
-			delete this;
-		}
-	}
+    if (r.contains(mouseLoc)){
+        if (isClicked())
+        {
+            setclicked(False);
+        }
+        else
+        {
+            setclicked(True);
+        }
+    }
 }
 
 
@@ -448,98 +338,289 @@ elsewhere it will probably crash.
 
 
 class Canvas {
-	vector< vector<Cell> > cells;
-	public:
-	Canvas();
-	void draw();
-	void mouseMove(Point mouseLoc);
-	void mouseClick(Point mouseLoc);
-	void keyPressed(int keyCode);
-	void actualizeNeighbors();
+  vector< vector<Cell> > cells;
+ public:
+  Canvas();
+  void draw();
+  void resetClicks();
+  void checkClicks();
+  void mouseMove(Point mouseLoc);
+  void mouseClick(Point mouseLoc);
+  void keyPressed(int keyCode);
+  void updateNeighbors();
+  void checkNeighbors();
+  void checkNeighborsX();
+  void checkNeighborsY();
+  void printCells();
 };
 
 Canvas::Canvas() {
-	string niveau;
+    string niveau;
 	ifstream file;
-	file.open("niveaux/1bis.txt");
-	getline(file, niveau);
+    int b_type, id, elem;
+	file.open("niveaux/1.txt");
 
 	for (int x = 0; x<9; x++) {
 		cells.push_back({});
 	}
-
-	int elem = 0;
-	for (int y = 0; y<9; y++){
-		for (int x = 0; x<9; x++){
-			int carre = niveau[elem] - '0';
-			cells[x].push_back({{96*x+47, 96*y+97}, 95, 95,carre});
+    
+	for (int x = 0; x<9; x++){
+        getline(file, niveau);
+        elem = 0;
+		for (int y = 0; y<9; y++){
+			b_type = niveau[elem] - '0';
+			cout << b_type << endl;
+            id = y + ((x * 9));
+			cells[x].push_back({{100*y+50, 100*x+150}, 100, 100,b_type,id, x, y});
 			elem++;
 		}
 	}
-
-	actualizeNeighbors();
+    updateNeighbors();
 }
 
-void Canvas::actualizeNeighbors(){
-	for (int y = 0; y < 9; y++){
-		for (int x = 0; x < 9; x++){
-			Cell &c = cells[x][y];
-			if(x + 1 <= 8 && y + 1 <= 8){
-				c.addNeighbors(cells[x+1][y]);
-				c.addNeighbors(cells[x][y+1]);
-			}else if(x + 1 <= 8){
-				c.addNeighbors(cells[x+1][y]);
-			}else if(y + 1 <= 8){
-				c.addNeighbors(cells[x][y+1]);
-			}
-			
-			if(x - 1 >= 0 && y - 1 >= 0){
-				c.addNeighbors(cells[x-1][y]);
-				c.addNeighbors(cells[x][y-1]);
-			}else if(x - 1 >= 0){
-				c.addNeighbors(cells[x-1][y]);
-			}else if(y - 1 >= 0){
-				c.addNeighbors(cells[x][y-1]);
-			}
-		}
-	} 
-}
 
 
 void Canvas::draw() {
-	for (auto &v: cells)
-		for (auto &c: v)
-			c.draw();
+  for (auto &v: cells)
+    for (auto &c: v)
+      c.draw();
 }
 
 void Canvas::mouseMove(Point mouseLoc) {
-	for (auto &v: cells)
-		for (auto &c: v)
-			c.mouseMove(mouseLoc);
+  for (auto &v: cells)
+    for (auto &c: v)
+      c.mouseMove(mouseLoc);
 }
 
 void Canvas::mouseClick(Point mouseLoc) {
-	Cell* toSwitch = nullptr;
-	Cell* temp = nullptr;
-	for (auto &v: cells)
-		for (auto &c: v)
-			for (auto &c: v) {
-				c.mouseClick(mouseLoc);
-				if(c.getStateSwitch()){
-					if(toSwitch == nullptr){
-						toSwitch = &c;
-					}else{
-						swap(*toSwitch, c);
-					}
+    checkClicks();
+    bool switched = False;
+    Point temp_P_C, temp_P_N;
+	  Fl_Box* temp_imgbox_c;
+  	Fl_Box* temp_imgbox_n;
+    Fl_PNG_Image* temp_pngimg_c;
+	  Fl_PNG_Image* temp_pngimg_n;
+    int temp_x_C, temp_y_C, temp_x_N, temp_y_N, temp_col_n, temp_col_c;
+    for (auto &v: cells){
+        for (auto &c: v){
+            c.mouseClick(mouseLoc);
+            for (auto &n : c.getNeighbors()){
+                if(c.isClicked() && n->isClicked()){
+                    switched = True;
+                    temp_P_C = c.getRect().getCenter(); 
+                    temp_P_N = n->getRect().getCenter(); 
+					          temp_pngimg_c = c.getRect().getImagePng();
+					          temp_pngimg_n = n->getRect().getImagePng();
+					          temp_imgbox_c = c.getRect().getImageBox();
+					          temp_imgbox_n = n->getRect().getImageBox();
+                    temp_x_C = c.getX();
+                    temp_y_C = c.getY();
+                    temp_x_N = n->getX();
+                    temp_y_N = n->getY();
+					          temp_col_n = n->getTypeColor();
+					          temp_col_c = c.getTypeColor();
+                }
+            }
+        }
+    }
+    
+    if (switched)
+    {
+        //swap des centre de la cell(coordonées dans la fenêtre)
+        cells[temp_x_C][temp_y_C].getRect().setCenter(temp_P_N);
+        cells[temp_x_N][temp_y_N].getRect().setCenter(temp_P_C);
+        // swap des cell dans le vecteur cells
+		    swap(cells[temp_x_C][temp_y_C], cells[temp_x_N][temp_y_N]);// echange les 2 cells dans la liste cells
+        cells[temp_x_N][temp_y_N].setX(temp_x_N);
+        cells[temp_x_N][temp_y_N].setY(temp_y_N);
+        cells[temp_x_C][temp_y_C].setX(temp_x_C);
+        cells[temp_x_C][temp_y_C].setY(temp_y_C);
+        //swap des images 
+		    cells[temp_x_C][temp_y_C].getRect().setImageBox(temp_imgbox_n);
+        cells[temp_x_N][temp_y_N].getRect().setImageBox(temp_imgbox_c);
+		
+		    cells[temp_x_C][temp_y_C].getRect().setImagePng(temp_pngimg_n);
+        cells[temp_x_N][temp_y_N].getRect().setImagePng(temp_pngimg_c);
+		
+        cells[temp_x_C][temp_y_C].getRect().getImageBox()->position(temp_P_C.x-100/2, temp_P_C.y-100/2);
+        cells[temp_x_N][temp_y_N].getRect().getImageBox()->position(temp_P_N.x-100/2, temp_P_N.y-100/2);
+
+		    cells[temp_x_C][temp_y_C].setTypeColor(temp_col_n);
+		    cells[temp_x_N][temp_y_N].setTypeColor(temp_col_c);
+
+        updateNeighbors();
+        resetClicks();
+        printCells();
+        checkNeighbors();
+    }
+    checkClicks();
+}  
+
+
+
+void Canvas::resetClicks(){
+    //reinitialise l''etat (isClicked()) de toute les cells 
+    for (auto &v: cells)
+        for (auto &c: v)
+            c.setclicked(False);
+}
+
+void Canvas::checkClicks(){
+  //resetClicks si deux cells sont activées en même temps 
+    int count = 0;
+    for (auto &v: cells)
+        for (auto &c: v){
+            if (c.isClicked()){
+                count++;
+            }   
+        }
+    if (count == 2)
+    {
+        resetClicks();
+    }    
+}
+
+
+
+void Canvas::updateNeighbors(){
+    // Mets a jour la liste des voisins de toutes les cells
+    for (int x = 0; x<9; x++)
+        for (int y = 0; y<9; y++) {
+            vector<Cell *> neighbors;
+            for (auto &shift: vector<Point>({{-1, 0},{ 0, 1},{ 1, 0},{ 0, -1},})) {
+                int neighborx = x+shift.x;
+                int neighbory = y+shift.y;
+                    if (neighborx >= 0 && // Check if the indicies are in range
+                        neighbory >= 0 &&
+                        neighborx < cells.size() &
+                        neighbory < cells[neighborx].size()){
+                        neighbors.push_back(&cells[neighborx][neighbory]);
+                        cells[x][y].setNeighbors(neighbors);
+                    }
+            }
+        }
+}
+
+void Canvas::checkNeighbors(){
+	checkNeighborsX();
+	checkNeighborsY();
+}
+
+void Canvas::checkNeighborsX(){
+
+	for(int x = 0; x < 9; x++){
+		int counter = 1;
+		int counter_max = 1;
+		int lastcolor = -1;
+		vector<Point> recurrence;
+		for(int y = 0; y < 9; y++){
+			Cell &c = cells[x][y];
+      
+			Point current = {c.getTypeColor(), 1};
+			bool isPresent = false;
+			for(auto &test : recurrence){
+				if (test.x == c.getTypeColor()){
+					isPresent = True;
 				}
 			}
+			if(!(isPresent)){
+				recurrence.push_back(current);
+			}
+
+			if (lastcolor == c.getTypeColor()){
+				counter++;
+				if(counter > counter_max){
+					counter_max = counter;
+					
+				}
+				if (counter_max >= 3){
+					for(auto &vec : recurrence){
+						if(c.getTypeColor() == vec.x){
+							vec.y = counter_max;
+						}
+					}
+					counter_max = 1;
+				}
+			}else{
+				lastcolor = c.getTypeColor();
+				counter = 1;
+			}
+		}
+		for(auto &vec : recurrence){
+			if(vec.y >= 3){
+				cout << "Allignement de " << vec.y << " bonbons de couleur " << vec.x << endl;
+			}
+		}
+	}
+}
+
+void Canvas::checkNeighborsY(){
+
+	for(int x = 0; x < 9; x++){
+		int counter = 1;
+		int counter_max = 1;
+		int lastcolor = -1;
+
+		vector<Point> recurrence;
+
+		for(int y = 0; y < 9; y++){
+
+			Cell &c = cells[y][x];
+
+			Point atm = {c.getTypeColor(), 1};
+			bool isPresent = false;
+			for(auto &test : recurrence){
+				if (test.x == c.getTypeColor()){
+					isPresent = True;
+				}
+			}
+
+			if(!(isPresent)){
+				recurrence.push_back(atm);
+			}
+
+			if (lastcolor == c.getTypeColor()){
+				counter++;
+				if(counter > counter_max){
+					counter_max = counter;
+					
+				}
+				if (counter_max >= 3){
+					for(auto &vec : recurrence){
+						if(c.getTypeColor() == vec.x){
+							vec.y = counter_max;
+						}
+					}
+					counter_max = 1;
+				}
+			}else{
+				lastcolor = c.getTypeColor();
+				counter = 1;
+			}
+		}
+		for(auto &vec : recurrence){
+			if(vec.y >= 3){
+				cout << "TypeColor - " << vec.x << " - Nombre de rec - " << vec.y << endl;
+			}
+		}
+	}
+}
+
+void Canvas::printCells(){
+    for (auto &v: cells){
+        for (auto &c: v){
+            cout << c.getId() << " ; ";
+        }
+        cout << endl;
+    }
+    cout << "--------------------------------------" << endl;
 }
 
 void Canvas::keyPressed(int keyCode) {
-	switch (keyCode) {
-		case 'q':
-			exit(0);
-	}
+  switch (keyCode) {
+    case 'q':
+      exit(0);
+  }
 }
 
 /*--------------------------------------------------
@@ -551,35 +632,35 @@ Do not edit!!!!
 --------------------------------------------------*/
 
 class MainWindow : public Fl_Window {
-	Canvas canvas;
-	public:
-	MainWindow() : Fl_Window(500, 50, 863, 913, "Candy Crush") {
-		Fl::add_timeout(1.0/60, Timer_CB, this);
-		resizable(this);
-	}
-	void draw() override {
-		Fl_Window::draw();
-		canvas.draw();
-	}
-	int handle(int event) override {
-		switch (event) {
-			case FL_MOVE:
-    			canvas.mouseMove(Point{Fl::event_x(), Fl::event_y()});
-				return 1;
-			case FL_PUSH:
-				canvas.mouseClick(Point{Fl::event_x(), Fl::event_y()});
-				return 1;
-			case FL_KEYDOWN:
-				canvas.keyPressed(Fl::event_key());
-				return 1;
-		}
-		return 0;
-	}
-	static void Timer_CB(void *userdata) {
-		MainWindow *o = (MainWindow*) userdata;
-		o->redraw();
-		Fl::repeat_timeout(1.0/60, Timer_CB, userdata);
-	}
+  Canvas canvas;
+ public:
+  MainWindow() : Fl_Window(500, 50, 900, 1000, "Candy Crush by Edem and Miguel") {
+    Fl::add_timeout(1.0/60, Timer_CB, this);
+    resizable(this);
+  }
+  void draw() override {
+    Fl_Window::draw();
+    canvas.draw();
+  }
+  int handle(int event) override {
+    switch (event) {
+      case FL_MOVE:
+        canvas.mouseMove(Point{Fl::event_x(), Fl::event_y()});
+        return 1;
+      case FL_PUSH:
+        canvas.mouseClick(Point{Fl::event_x(), Fl::event_y()});
+        return 1;
+      case FL_KEYDOWN:
+        canvas.keyPressed(Fl::event_key());
+        return 1;
+    }
+    return 0;
+  }
+  static void Timer_CB(void *userdata) {
+    MainWindow *o = (MainWindow*) userdata;
+    o->redraw();
+    Fl::repeat_timeout(1.0/60, Timer_CB, userdata);
+  }
 };
 
 
@@ -593,8 +674,8 @@ Do not edit!!!!
 
 
 int main(int argc, char *argv[]) {
-	srand(time(0));
-	MainWindow window;
-	window.show(argc, argv);
-	return Fl::run();
+  srand(time(0));
+  MainWindow window;
+  window.show(argc, argv);
+  return Fl::run();
 }
