@@ -442,15 +442,15 @@ void Canvas::mouseClick(Point mouseLoc) {
     
     if (switched)
     {
-        cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
-        cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
+		cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
+		cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
 
 		swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);// echange les 2 cells dans la liste cells
 
 		//Cell 1
-        
-        cells[cts.coord_1.x][cts.coord_1.y].setX(cts.coord_1.x);
-        cells[cts.coord_1.x][cts.coord_1.y].setY(cts.coord_1.y);
+
+		cells[cts.coord_1.x][cts.coord_1.y].setX(cts.coord_1.x);
+		cells[cts.coord_1.x][cts.coord_1.y].setY(cts.coord_1.y);
 
 		cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBox(cts.img_2.box);
 		cells[cts.coord_1.x][cts.coord_1.y].getRect().setImagePng(cts.img_2.png);
@@ -461,17 +461,17 @@ void Canvas::mouseClick(Point mouseLoc) {
 		//Cell 2
 
 		cells[cts.coord_2.x][cts.coord_2.y].setX(cts.coord_2.x);
-        cells[cts.coord_2.x][cts.coord_2.y].setY(cts.coord_2.y);
+		cells[cts.coord_2.x][cts.coord_2.y].setY(cts.coord_2.y);
 
-        cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBox(cts.img_1.box);
-        cells[cts.coord_2.x][cts.coord_2.y].getRect().setImagePng(cts.img_1.png);
-        cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
+		cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBox(cts.img_1.box);
+		cells[cts.coord_2.x][cts.coord_2.y].getRect().setImagePng(cts.img_1.png);
+		cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
 
 		cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
 
-        updateNeighbors();
-        resetClicks();
-        printCells();
+		updateNeighbors();
+		resetClicks();
+		printCells();
 		checkNeighbors();
     }
     checkClicks();
