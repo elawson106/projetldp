@@ -348,7 +348,7 @@ class Canvas {
   void mouseClick(Point mouseLoc);
   void keyPressed(int keyCode);
   void updateNeighbors();
-  void checkNeighbors();
+  void checkNeighbors(int axe);
   void printCells();
 };
 
@@ -449,7 +449,9 @@ void Canvas::mouseClick(Point mouseLoc) {
         updateNeighbors();
         resetClicks();
         printCells();
-		checkNeighbors();
+		checkNeighbors(1);
+		cout << "END --------------- END" << endl;
+		checkNeighbors(2);
     }
     checkClicks();
 }  
@@ -496,13 +498,37 @@ void Canvas::updateNeighbors(){
         }
 }
 
-void Canvas::checkNeighbors(){
+void Canvas::checkNeighbors(int axe){
+
 	for(int x = 0; x < 9; x++){
 		int counter = 1;
 		int counter_max = 1;
 		int lastcolor = -1;
+
+		vector<Point> recurrence;
+
 		for(int y = 0; y < 9; y++){
+
+			if(axe == 2){
+				int temp_x = x;
+				x = y;
+				y = temp_x;
+				cout << "oui" << endl;
+			}
 			Cell &c = cells[x][y];
+
+			Point atm = {c.getTypeColor(), 1};
+			bool isPresent = false;
+			for(auto &test : recurrence){
+				if (test.x == c.getTypeColor()){
+					isPresent = True;
+				}
+			}
+
+			if(!(isPresent)){
+				recurrence.push_back(atm);
+			}
+
 			if (lastcolor == c.getTypeColor()){
 				counter++;
 				if(counter > counter_max){
@@ -510,7 +536,11 @@ void Canvas::checkNeighbors(){
 					
 				}
 				if (counter_max >= 3){
-					cout << "Ligne gagnante en X - " << counter_max << endl;
+					for(auto &vec : recurrence){
+						if(c.getTypeColor() == vec.x){
+							vec.y = counter_max;
+						}
+					}
 					counter_max = 1;
 				}
 			}else{
@@ -519,30 +549,11 @@ void Canvas::checkNeighbors(){
 			}
 		}
 		cout << "X-----------------------" << endl;
-	}
-
-	for(int x = 0; x < 9; x++){
-		int counter = 1;
-		int counter_max = 1;
-		int lastcolor = -1;
-		for(int y = 0; y < 9; y++){
-			Cell &c = cells[y][x];
-			if (lastcolor == c.getTypeColor()){
-				counter++;
-				if(counter > counter_max){
-					counter_max = counter;
-					
-				}
-				if (counter_max >= 3){
-					cout << "Ligne gagnante en Y - " << counter_max << endl;
-					counter_max = 1;
-				}
-			}else{
-				lastcolor = c.getTypeColor();
-				counter = 1;
+		for(auto &vec : recurrence){
+			if(vec.y >= 3){
+				cout << "TypeColor - " << vec.x << " - Nombre de rec - " << vec.y << endl;
 			}
 		}
-		cout << "Y-----------------------" << endl;
 	}
 }
 
