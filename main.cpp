@@ -503,7 +503,7 @@ void Canvas::checkNeighbors(){
   cout<< "--------------Checking....----------"<< endl;
 	checkNeighborsX();
 	checkNeighborsY();
-  cout<< "------------Check done -------------"<< endl;
+  cout<< "------------Check done -------------"<< endl << endl;
 }
 class Recurrence {
     //TODO changer le point en structure de 2 int et 2 point (b_type, recurrence, Point(indice debut), Point(indice fin))
@@ -516,7 +516,8 @@ class Recurrence {
     vector<Point> &getVec(){return recu;}
     //others
     void add(Point newP); 
-    bool isPouf();  
+    bool isPouf();
+    int findB_type(int b_type);  
 
 
 };
@@ -543,32 +544,30 @@ bool Recurrence::isPouf(){
 			}
     }
     return pouf;
-      
-		
-
-
+}
+int Recurrence::findB_type(int b_type){
+  //return index of ellement which has b_type as .x
+  for (size_t i = 0; i < recu.size(); i++)
+  {
+    if (recu[i].x==b_type){
+        return i;
+      }
+  }
+   
 }
 void Canvas::checkNeighborsX(){
 	for(int x = 0; x < 9; x++){
-		int counter = 1;
-		int counter_max = 1;
 		int lastcolor = -1;
 		Recurrence recurrence;
 		for(int y = 0; y < 9; y++){
 			Cell &c = cells[x][y];
 			Point current = {c.getTypeColor(), 1};
 			recurrence.add(current);
+      int rec_index = recurrence.findB_type(current.x);
 			if (lastcolor == current.x){
-				counter++;
-				if(counter > counter_max){
-					counter_max = counter;
-				}
-        for(auto &b_type : recurrence.getVec())
-          if(current.x == b_type.x){b_type.y = counter_max;}
-        counter_max = 1;
+				recurrence.getVec()[rec_index].x++;
 			}else{
 				lastcolor = current.x;
-				counter = 1;
 			}
 		}
 		if (recurrence.isPouf()){cout<<"pouf sur horrizontal"<<endl;}
