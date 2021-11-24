@@ -367,6 +367,7 @@ class Canvas {
   void mouseClick(Point mouseLoc);
   void keyPressed(int keyCode);
   void updateNeighbors();
+  void switchCells(vector< vector<Cell> > &cells, CTS cts);
   void checkNeighbors();
   void checkNeighborsX();
   void checkNeighborsY();
@@ -435,6 +436,12 @@ void Canvas::mouseClick(Point mouseLoc) {
     
     if (switched)
     {
+          switchCells(cells, cts);
+    }
+    checkClicks();
+}  
+
+void Canvas::switchCells(vector< vector<Cell> > &cells, CTS cts){
           cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
           cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
 
@@ -462,10 +469,7 @@ void Canvas::mouseClick(Point mouseLoc) {
           resetClicks();
           printCells();
           checkNeighbors();
-    }
-    checkClicks();
-}  
-
+}
 
 void Canvas::resetClicks(){
     //reinitialise l''etat (isClicked()) de toute les cells 
@@ -567,11 +571,11 @@ void Canvas::checkNeighborsX(){
 		Recurrence recurrence;
 		for(int y = 0; y < 9; y++){
 			Cell &c = cells[x][y];
-			int current = c.getTypeColor();
-			recurrence.add({current, 1, {x, y}, {x, y}});
+			int current = c.getTypeColor();     // Prends la couleur de la case actuelle 
+			recurrence.add({current, 1, {x, y}, {x, y}});     // Initialise son compteur dans le vecteur de recurrence/ne fait rien si on est dans une chaine
 			if (lastcolor == current){
-				recurrence.getVec().back().amount++;
-        recurrence.getVec().back().finish = {x,y};
+				recurrence.getVec().back().amount++;            // incremente la compteur de la couleur current si il y a une chaine
+        recurrence.getVec().back().finish = {x,y};      // redefinis la fin de la chaine
 			}else{
 				lastcolor = current;
 			}
@@ -586,11 +590,11 @@ for(int x = 0; x < 9; x++){
 		Recurrence recurrence;
 		for(int y = 0; y < 9; y++){
 			Cell &c = cells[y][x];
-			int current = c.getTypeColor(); // Prends la couleur de la case actuelle 
-			recurrence.add({current, 1, {y, x}, {y, x}});  // Initialise son compteur dans le vecteur de recurrence/ne fait rien si on est dans une chaine
+			int current = c.getTypeColor(); 
+			recurrence.add({current, 1, {y, x}, {y, x}});  
 			if (lastcolor == current){
-				recurrence.getVec().back().amount++;         // incremente la compteur de la couleur current si il y a une chaine
-        recurrence.getVec().back().finish = {y,x};   // redefinis la fin de la chaine
+				recurrence.getVec().back().amount++;        
+        recurrence.getVec().back().finish = {y,x};   
 			}else{
 				lastcolor = current;                         
 			}
