@@ -592,13 +592,13 @@ for(int x = 0; x < 9; x++){
 		Recurrence recurrence;
 		for(int y = 0; y < 9; y++){
 			Cell &c = cells[y][x];
-			int current = c.getTypeColor();
-			recurrence.add({current, 1, {y, x}, {y, x}});
+			int current = c.getTypeColor(); // Prends la couleur de la case actuelle 
+			recurrence.add({current, 1, {y, x}, {y, x}});  // Initialise son compteur dans le vecteur de recurrence/ne fait rien si on est dans une chaine
 			if (lastcolor == current){
-				recurrence.getVec().back().amount++;
-        recurrence.getVec().back().finish = {y,x};
+				recurrence.getVec().back().amount++;         // incremente la compteur de la couleur current si il y a une chaine
+        recurrence.getVec().back().finish = {y,x};   // redefinis la fin de la chaine
 			}else{
-				lastcolor = current;
+				lastcolor = current;                         
 			}
 		}
 		if (recurrence.isPouf()){cout<<"        Pouf sur vertical"<<endl<<endl;}
