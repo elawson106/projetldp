@@ -37,6 +37,9 @@ struct ImageBonbon{
 
 	Fl_Box* getBox() { return box; }
 	Fl_PNG_Image* getPNG() { return png; }
+
+	void setBox(Fl_Box* b) { box = b; }
+	void setPNG(Fl_PNG_Image* i) { png = i; box->image(png); }
 };
 
 struct TemporaryCell{
@@ -92,24 +95,15 @@ class Text {
 	void draw();
 
 	//Setters and getters
-	string getString() {
-		return s;
-	}
-	void setString(const string &newString) {
-		s = newString;
-	}
-	int getFontSize() {
-		return fontSize;
-	}
-	void setFontSize(int newFontSize) {
-		fontSize = newFontSize;
-	}
-	Point getCenter() {
-		return center;
-	}
-	void setCenter(Point newCenter) {
-		center = newCenter;
-	}
+	string getString() { return s; }
+	void setString(const string &newString) { s = newString; }
+
+	int getFontSize() { return fontSize; }
+	void setFontSize(int newFontSize) { fontSize = newFontSize; }
+
+	Point getCenter() { return center; }
+	void setCenter(Point newCenter) { center = newCenter; }
+
 };
 
 void Text::draw() {
@@ -147,52 +141,29 @@ class Rectangle {
 	ImageBonbon bonbon_image;
 
 	public:
-		Rectangle(Point center, int w, int h,
-            int id, int b_type);
+		Rectangle(Point center, int w, int h, int id, int b_type);
 
 	//setters
 	void setFillColor(Fl_Color newFillColor);
-		Fl_Color getFillColor() {
-		return fillColor;
-	}
+	Fl_Color getFillColor() { return fillColor; }
+
 	void setFrameColor(Fl_Color newFrameColor);
-		Fl_Color getFrameColor() {
-		return frameColor;
-	}
-	void setWidth(int neww) {
-		w = neww;
-	}
-	void setHeight(int newh) {
-		h = newh;
-	}
-	void setCenter(Point newC){
-			center = newC;
-	}
-	void setImageBox(Fl_Box* box){
-		bonbon_image.box = box;
-	}
+	Fl_Color getFrameColor() { return frameColor; }
+	
+	void setWidth(int neww) { w = neww; }
 
-	void setImagePng(Fl_PNG_Image* png){
-		bonbon_image.png = png;
-	}
-  //getters
-	int getWidth() {
-		return w;
-	}
-	int getHeight() {
-		return h;
-	}
-	Point getCenter() {
-		return center;
-	}
-	Fl_Box* getImageBox(){
-		return bonbon_image.box;
-	}
+	void setHeight(int newh) { h = newh; }
 
-	Fl_PNG_Image* getImagePng(){
-		return bonbon_image.png;
-	}
+	void setCenter(Point newC){ center = newC; }
+
+	//getters
+	int getWidth() { return w; }
+	int getHeight() { return h; }
+	
+	Point getCenter() { return center; }
+	ImageBonbon getBonbon(){ return bonbon_image; }
 	//others
+
 	void init();
 	void draw();
 	bool contains(Point p);
@@ -205,38 +176,37 @@ Rectangle::Rectangle(Point center, int w, int h,
 
 void Rectangle::init(){
 	Fl_PNG_Image* png_img;
-		switch (b_type)
-		{
-		case 1:
-			png_img = new Fl_PNG_Image("bonbon/tile000.png");
-			break;
+	switch (b_type)
+	{
+	case 1:
+		png_img = new Fl_PNG_Image("bonbon/tile000.png");
+		break;
 
-		case 2:
-			png_img = new Fl_PNG_Image("bonbon/tile001.png");
-			break;
+	case 2:
+		png_img = new Fl_PNG_Image("bonbon/tile001.png");
+		break;
 
-		case 3:
-			png_img = new Fl_PNG_Image("bonbon/tile002.png");
-			break;
+	case 3:
+		png_img = new Fl_PNG_Image("bonbon/tile002.png");
+		break;
 
-		case 4:
-			png_img = new Fl_PNG_Image("bonbon/tile003.png");
-			break;
+	case 4:
+		png_img = new Fl_PNG_Image("bonbon/tile003.png");
+		break;
 
-		case 5:
-			png_img = new Fl_PNG_Image("bonbon/tile004.png");
-			break;
+	case 5:
+		png_img = new Fl_PNG_Image("bonbon/tile004.png");
+		break;
 
-		case 6:
-			png_img = new Fl_PNG_Image("bonbon/tile005.png");
-			break;
-		
-		default:
-			break;
-		}
+	case 6:
+		png_img = new Fl_PNG_Image("bonbon/tile005.png");
+		break;
+	
+	default:
+		break;
+	}
 	bonbon_image = {new Fl_Box(center.x-w/2, center.y-h/2, w, h), png_img};
-	bonbon_image.getBox()->image(png_img);
-}
+	bonbon_image.getBox()->image(png_img);}
 
 void Rectangle::draw() {    
     //fl_draw_box(FL_FLAT_BOX, center.x-w/2, center.y-h/2, w, h, fillColor);
@@ -442,8 +412,8 @@ void Canvas::mouseClick(Point mouseLoc) {
                 if(c.isClicked() && n->isClicked()){
                     switched = True;
 
-					ImageBonbon ib_1 = {c.getRect().getImageBox(), c.getRect().getImagePng()};
-					ImageBonbon ib_2 = {n->getRect().getImageBox(), n->getRect().getImagePng()};
+					ImageBonbon ib_1 = {c.getRect().getBonbon().getBox(), c.getRect().getBonbon().getPNG()};
+					ImageBonbon ib_2 = {n->getRect().getBonbon().getBox(), n->getRect().getBonbon().getPNG()};
 
 					Point coord_1 = {c.getX(), c.getY()};
 					Point coord_2 = {n->getX(), n->getY()};
@@ -466,9 +436,9 @@ void Canvas::mouseClick(Point mouseLoc) {
 		cells[cts.coord_1.x][cts.coord_1.y].setX(cts.coord_1.x);
 		cells[cts.coord_1.x][cts.coord_1.y].setY(cts.coord_1.y);
 
-		cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBox(cts.img_2.box);
-		cells[cts.coord_1.x][cts.coord_1.y].getRect().setImagePng(cts.img_2.png);
-		cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
+		cells[cts.coord_1.x][cts.coord_1.y].getRect().getBonbon().setBox(cts.img_2.box);
+		cells[cts.coord_1.x][cts.coord_1.y].getRect().getBonbon().setPNG(cts.img_2.png);
+		cells[cts.coord_1.x][cts.coord_1.y].getRect().getBonbon().getBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
 
 		cells[cts.coord_1.x][cts.coord_1.y].setTypeColor(cts.type_2);
 
@@ -477,9 +447,9 @@ void Canvas::mouseClick(Point mouseLoc) {
 		cells[cts.coord_2.x][cts.coord_2.y].setX(cts.coord_2.x);
 		cells[cts.coord_2.x][cts.coord_2.y].setY(cts.coord_2.y);
 
-		cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBox(cts.img_1.box);
-		cells[cts.coord_2.x][cts.coord_2.y].getRect().setImagePng(cts.img_1.png);
-		cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
+		cells[cts.coord_2.x][cts.coord_2.y].getRect().getBonbon().setBox(cts.img_1.box);
+		cells[cts.coord_2.x][cts.coord_2.y].getRect().getBonbon().setPNG(cts.img_1.png);
+		cells[cts.coord_2.x][cts.coord_2.y].getRect().getBonbon().getBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
 
 		cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
 
@@ -669,7 +639,7 @@ void Canvas::poufTest(TemporaryCell temp){
 	for(int i = 1; i <= temp.count; i++){
 		Cell &c = cells[indice_base.x][indice_base.y + i];
 		//c.getRect().setCenter({0, 0});
-		c.getRect().getImageBox()->image(nullptr);
+		c.getRect().getBonbon().getBox()->image(nullptr);
 	}
 }
 
@@ -698,7 +668,7 @@ void Canvas::poufTest2(TemporaryCell temp){
 	for(int i = 1; i <= temp.count; i++){
 		Cell &c = cells[indice_base.x + i][indice_base.y];
 		//c.getRect().setCenter({0, 0});
-		c.getRect().getImageBox()->image(nullptr);
+		c.getRect().getBonbon().getBox()->image(nullptr);
 	}
 }
 
