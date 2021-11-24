@@ -524,18 +524,16 @@ void Canvas::checkNeighbors(){
 }
 
 struct recurCount
+  //stocke la couleur, la taille et les coordonnées(debut et fin) des chaines de bonbons du plateau
 {
   int color, amount;
   Point start, finish;
 };
 
 class Recurrence {
-    //TODO changer le point en structure de 2 int et 2 point (b_type, recurrence, Point(indice debut dans cells), Point(indice fin dans cells))
-    // isPouf() retourne les indice de debut et de fin de la chaine
+    // vecteur de compteurs de chaines(recurCount)
     vector<recurCount> recu;
   public:
-    //setters
-    void setVec(vector<recurCount> newVec){recu = newVec;}
     //getters
     vector<recurCount> &getVec(){return recu;}
     //others
@@ -544,7 +542,7 @@ class Recurrence {
 };
 
 void Recurrence::add(recurCount newP){
-      // add si le dernier point de recu a une couleur differente de celle de newP
+      // add si le dernier point du vecteur a une couleur differente de celle de newP
       bool lastRecu = False;
       if (!(recu.empty())){
         if (recu.back().color == newP.color)
@@ -557,6 +555,7 @@ void Recurrence::add(recurCount newP){
       }
 }
 bool Recurrence::isPouf(){
+    // return true si il y a eu une chaine >= 3 dans le vecteur
     bool pouf = false;
     for(auto &elem : recu){
 			if(elem.amount >= 3){
