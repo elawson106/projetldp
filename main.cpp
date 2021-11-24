@@ -617,7 +617,6 @@ void Canvas::checkNeighborsY(){
 
 void Canvas::poufTest(TemporaryCell temp){
 	Point base = {temp.coord.x, temp.coord.y};
-	cout << "POINT BASE - " << base.x << " - " << base.y << endl;
 	Point indice_base = {0, 0};
 
 	int counter = 0;
@@ -629,9 +628,7 @@ void Canvas::poufTest(TemporaryCell temp){
 			counter++;
 			if(counter == temp.count){
 				indice_base = {base.x, y - temp.count};
-				cout << "base - " << indice_base.x << " - " << indice_base.y << endl;
 			}
-			cout << "pareil - " << counter << " - " << temp.count << endl;
 		}else{
 			counter = 0;
 		}
@@ -640,7 +637,6 @@ void Canvas::poufTest(TemporaryCell temp){
 	for(int i = 1; i <= temp.count; i++){
 		Cell &c = cells[indice_base.x][indice_base.y + i];
 		//c.getRect().setCenter({0, 0});
-		cout << "PA - " << indice_base.x << " - " << indice_base.y + i << endl;
 		c.getRect().getImageBox()->image(nullptr);
 		c.setTypeColor(0);
 	}
@@ -656,7 +652,6 @@ void Canvas::poufTest2(TemporaryCell temp){
 		
 		Cell &c = cells[x][base.y];
 		if(c.getTypeColor() == temp.type){
-			cout << "pareil" << endl;
 			counter++;
 			if(counter == temp.count){
 				indice_base = {x - temp.count, base.y};
@@ -669,7 +664,6 @@ void Canvas::poufTest2(TemporaryCell temp){
 	for(int i = 1; i <= temp.count; i++){
 		Cell &c = cells[indice_base.x + i][indice_base.y];
 		//c.getRect().setCenter({0, 0});
-		cout << "PA2 - " << indice_base.x + i << " - " << indice_base.y << endl;
 		c.getRect().getImageBox()->image(nullptr);
 		c.setTypeColor(0);
 	}
