@@ -31,6 +31,8 @@ struct Point {
 	int x, y;
 };
 
+
+
 struct ImageBonbon{
 	Fl_Box* box;
 	Fl_PNG_Image* png;
@@ -520,25 +522,32 @@ void Canvas::checkNeighbors(){
 	checkNeighborsY();
   cout<< "-------------- Check done -------------"<< endl << endl;
 }
+
+struct recurCount
+{
+  int color, amount;
+  Point start, finish;
+};
+
 class Recurrence {
     //TODO changer le point en structure de 2 int et 2 point (b_type, recurrence, Point(indice debut dans cells), Point(indice fin dans cells))
     // isPouf() retourne les indice de debut et de fin de la chaine
-    vector<Point> recu;
+    vector<recurCount> recu;
   public:
     //setters
-    void setVec(vector<Point> newVec){recu = newVec;}
+    void setVec(vector<recurCount> newVec){recu = newVec;}
     //getters
-    vector<Point> &getVec(){return recu;}
+    vector<recurCount> &getVec(){return recu;}
     //others
-    void add(Point newP); 
+    void add(recurCount newP); 
     bool isPouf();
 };
 
-void Recurrence::add(Point newP){
+void Recurrence::add(recurCount newP){
       // add si le dernier point de recu a une couleur differente de celle de newP
       bool lastRecu = False;
       if (!(recu.empty())){
-        if (recu.back().x == newP.x)
+        if (recu.back().color == newP.color)
         {
           lastRecu = True;
         }
@@ -549,9 +558,10 @@ void Recurrence::add(Point newP){
 }
 bool Recurrence::isPouf(){
     bool pouf = false;
-    for(auto &b_type : recu){
-			if(b_type.y >= 3){
-				cout << "Allignement de " << b_type.y << " bonbons de couleur " << b_type.x << endl;
+    for(auto &elem : recu){
+			if(elem.amount >= 3){
+				cout << "Allignement de " << elem.amount << " bonbons de couleur " << elem.color;
+        cout << " de la ligne " << elem.start.x << " à " << elem.finish.x << " et de la colonne "<< elem.start.y << " à " << elem.finish.y << endl ;
         pouf = True;
 			}
     }
@@ -565,9 +575,10 @@ void Canvas::checkNeighborsX(){
 		for(int y = 0; y < 9; y++){
 			Cell &c = cells[x][y];
 			int current = c.getTypeColor();
-			recurrence.add({current, 1});
+			recurrence.add({current, 1, {x, y}, {x, y}});
 			if (lastcolor == current){
-				recurrence.getVec().back().y++;
+				recurrence.getVec().back().amount++;
+        recurrence.getVec().back().finish = {x,y};
 			}else{
 				lastcolor = current;
 			}
@@ -585,7 +596,7 @@ void Canvas::checkNeighborsY(){
 			int current = c.getTypeColor();
 			recurrence.add({current, 1});
 			if (lastcolor == current){
-				recurrence.getVec().back().y++;
+				recurrence.getVec().back().amount++;
 			}else{
 				lastcolor = current;
 			}
@@ -626,7 +637,7 @@ class MainWindow : public Fl_Window {
  public:
   MainWindow() : Fl_Window(500, 50, 900, 1000, "Candy Crush by Edem and Miguel") {
     Fl::add_timeout(1.0/60, Timer_CB, this);
-    resizable(this);
+    //resizable(this);
   }
   void draw() override {
     Fl_Window::draw();
