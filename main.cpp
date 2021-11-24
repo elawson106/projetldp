@@ -467,7 +467,7 @@ void Canvas::switchCells(vector< vector<Cell> > &cells, CTS cts){
 
           updateNeighbors();
           resetClicks();
-          printCells();
+          //printCells();
           checkNeighbors();
 }
 
