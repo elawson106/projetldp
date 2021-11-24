@@ -41,12 +41,10 @@ struct ImageBonbon{
 
 struct TemporaryCell{
 	Point center;
-
-	ImageBonbon img;
-
 	Point coord;
 
 	int type;
+	int count;
 };
 
 struct CTS {
@@ -390,6 +388,8 @@ class Canvas {
 	void checkNeighborsX();
 	void checkNeighborsY();
 	void printCells();
+
+	void poufTest(TemporaryCell temp);
 };
 
 Canvas::Canvas() {
@@ -534,7 +534,7 @@ void Canvas::updateNeighbors(){
 
 void Canvas::checkNeighbors(){
 	checkNeighborsX();
-	checkNeighborsY();
+	//checkNeighborsY();
 }
 
 void Canvas::checkNeighborsX(){
@@ -544,16 +544,17 @@ void Canvas::checkNeighborsX(){
 		int counter_max = 1;
 		int lastcolor = -1;
 
-		vector<Point> recurrence;
+		vector<TemporaryCell> recurrence;
 
 		for(int y = 0; y < 9; y++){
 
 			Cell &c = cells[x][y];
 
-			Point atm = {c.getTypeColor(), 1};
+			TemporaryCell atm = {c.getRect().getCenter(), {c.getX(), c.getY()}, c.getTypeColor(), 1};
+
 			bool isPresent = false;
 			for(auto &test : recurrence){
-				if (test.x == c.getTypeColor()){
+				if (test.type == c.getTypeColor()){
 					isPresent = True;
 				}
 			}
@@ -570,8 +571,8 @@ void Canvas::checkNeighborsX(){
 				}
 				if (counter_max >= 3){
 					for(auto &vec : recurrence){
-						if(c.getTypeColor() == vec.x){
-							vec.y = counter_max;
+						if(c.getTypeColor() == vec.type){
+							vec.count = counter_max;
 						}
 					}
 					counter_max = 1;
@@ -582,8 +583,9 @@ void Canvas::checkNeighborsX(){
 			}
 		}
 		for(auto &vec : recurrence){
-			if(vec.y >= 3){
-				cout << "TypeColor - " << vec.x << " - Nombre de rec - " << vec.y << endl;
+			if(vec.count >= 3){
+				cout << "TypeColor - " << vec.coord.x << " - Nombre de rec - " << vec.coord.y << endl;
+				poufTest(vec);
 			}
 		}
 	}
@@ -638,6 +640,35 @@ void Canvas::checkNeighborsY(){
 				cout << "TypeColor - " << vec.x << " - Nombre de rec - " << vec.y << endl;
 			}
 		}
+	}
+}
+
+void Canvas::poufTest(TemporaryCell temp){
+	Point base = {temp.coord.x, temp.coord.y};
+	Point indice_base = {0, 0};
+
+	Cell &c = cells[base.x][base.y];
+
+	int counter = 1;
+
+	for(int y = 0; y < 9; y++){
+		
+		Cell &c = cells[base.x][y];
+		if(c.getTypeColor() == temp.type){
+			cout << "pareil" << endl;
+			counter++;
+			if(counter == temp.count){
+				indice_base = {base.x, y + 1 - temp.count};
+			}
+		}else{
+			counter = 1;
+		}
+
+	}
+	for(int i = 1; i <= temp.count; i++){
+		Cell &c = cells[indice_base.x][indice_base.y + i];
+		c.getRect().setCenter({0, 0});
+		c.getRect().getImageBox()->position(0, 0);
 	}
 }
 
