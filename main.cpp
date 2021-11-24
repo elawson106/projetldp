@@ -560,8 +560,8 @@ bool Recurrence::isPouf(){
     bool pouf = false;
     for(auto &elem : recu){
 			if(elem.amount >= 3){
-				cout << "Allignement de " << elem.amount << " bonbons de couleur " << elem.color;
-        cout << " de la ligne " << elem.start.x << " à " << elem.finish.x << " et de la colonne "<< elem.start.y << " à " << elem.finish.y << endl ;
+				cout << "Allignement de " << elem.amount << " bonbons de couleur " << elem.color << endl;
+        cout << "de la ligne " << elem.start.x << " à " << elem.finish.x << " et de la colonne "<< elem.start.y << " à " << elem.finish.y << endl ;
         pouf = True;
 			}
     }
@@ -588,22 +588,24 @@ void Canvas::checkNeighborsX(){
 }
 
 void Canvas::checkNeighborsY(){
-	for(int x = 0; x < 9; x++){
+for(int x = 0; x < 9; x++){
 		int lastcolor = -1;
 		Recurrence recurrence;
 		for(int y = 0; y < 9; y++){
 			Cell &c = cells[y][x];
 			int current = c.getTypeColor();
-			recurrence.add({current, 1});
+			recurrence.add({current, 1, {y, x}, {y, x}});
 			if (lastcolor == current){
 				recurrence.getVec().back().amount++;
+        recurrence.getVec().back().finish = {y,x};
 			}else{
 				lastcolor = current;
 			}
 		}
-		if (recurrence.isPouf()){cout<<"        Pouf sur vertical"<<endl;}
+		if (recurrence.isPouf()){cout<<"        Pouf sur vertical"<<endl<<endl;}
 	}
 }
+
 
 
 
