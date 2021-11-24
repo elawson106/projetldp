@@ -139,46 +139,39 @@ class Rectangle {
 
   //setters
   void setFillColor(Fl_Color newFillColor);
-    Fl_Color getFillColor() {
-    return fillColor;
-  }
+   
   void setFrameColor(Fl_Color newFrameColor);
-    Fl_Color getFrameColor() {
-    return frameColor;
-  }
-  void setWidth(int neww) {
-    w = neww;
-  }
-  void setHeight(int newh) {
-    h = newh;
-  }
-  void setCenter(Point newC){
-        center = newC;
-  }
-  void setImageBox(Fl_Box* box){
-	  img_box = box;
-  }
+    
+  void setWidth(int neww) {w = neww;}
 
-  void setImagePng(Fl_PNG_Image* png){
-	  png_img = png;
+  void setHeight(int newh) {h = newh;}
+
+  void setCenter(Point newC) {center = newC;}
+
+  void setImageBox(Fl_Box* box) {img_box = box;}
+
+  void setImagePng(Fl_PNG_Image* png) {png_img = png;}
+
+  void setImageBonbon(ImageBonbon img_bonbon) {
+    img_box = img_bonbon.box;
+    png_img = img_bonbon.png;
   }
   //getters
-  int getWidth() {
-    return w;
-  }
-  int getHeight() {
-    return h;
-  }
-  Point getCenter() {
-    return center;
-  }
-  Fl_Box* getImageBox(){
-	  return img_box;
-  }
+  int getWidth() {return w;}
 
-  Fl_PNG_Image* getImagePng(){
-	  return png_img;
-  }
+  int getHeight() {return h;}
+
+  Point getCenter() {return center;}
+
+  Fl_Color getFrameColor() {return frameColor;}
+
+   Fl_Color getFillColor() {return fillColor;}
+
+  ImageBonbon getImageBonbon() {return {img_box, png_img};}
+
+  Fl_Box* getImageBox() {return img_box;}
+
+  Fl_PNG_Image* getImagePng() {return png_img;}
   //others
   void init();
   void draw();
@@ -267,23 +260,20 @@ class Cell {
   // Constructor
   Cell(Point center, int w, int h, int color, int id, int ligne, int colonne);
   //Setters
+  void setTypeColor(int col){color = col;}
+  void setX(int x){ ligne = x;}
+  void setY(int y){ colonne= y;}
   void setclicked(bool value){
       clicked = value;
   }
   void setNeighbors(const vector<Cell *> newNeighbors) {
     neighbors = newNeighbors;
   }
-
-  void setTypeColor(int col){color = col;}
-  void setX(int x){ ligne = x;}
-  void setY(int y){ colonne= y;}
+  void setCoord(Point xy) {
+    ligne = xy.x;
+    colonne = xy.y;
+  }
   // getters
-  bool isClicked(){return clicked;}
-
-  vector<Cell *> getNeighbors(){return neighbors;}
-
-  Rectangle &getRect(){return r;}
-
   int getX(){return ligne;}
 
   int getY(){return colonne;}
@@ -291,6 +281,14 @@ class Cell {
   int getId(){return id;}
 
   int getTypeColor(){return color;}
+
+  Point getCoord() {return {ligne, colonne};}
+
+  bool isClicked(){return clicked;}
+
+  vector<Cell *> getNeighbors(){return neighbors;}
+
+  Rectangle &getRect(){return r;}
 
   // Methods that draw and handle events
   void draw();
@@ -423,11 +421,11 @@ void Canvas::mouseClick(Point mouseLoc) {
                 if(c.isClicked() && n->isClicked()){
                     switched = True;
 
-                    ImageBonbon ib_1 = {c.getRect().getImageBox(), c.getRect().getImagePng()};
-                    ImageBonbon ib_2 = {n->getRect().getImageBox(), n->getRect().getImagePng()};
+                    ImageBonbon ib_1 = c.getRect().getImageBonbon();
+                    ImageBonbon ib_2 = n->getRect().getImageBonbon();
 
-                    Point coord_1 = {c.getX(), c.getY()};
-				          	Point coord_2 = {n->getX(), n->getY()};
+                    Point coord_1 = c.getCoord();
+				          	Point coord_2 = n->getCoord();
 
 				          	CTS cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
                 }
@@ -440,26 +438,22 @@ void Canvas::mouseClick(Point mouseLoc) {
           cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
           cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
 
-          swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);// echange les 2 cells dans la liste cells
+          swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);  // echange les 2 cells dans la liste cells
 
           //Cell 1
 
-          cells[cts.coord_1.x][cts.coord_1.y].setX(cts.coord_1.x);
-          cells[cts.coord_1.x][cts.coord_1.y].setY(cts.coord_1.y);
+          cells[cts.coord_1.x][cts.coord_1.y].setCoord({cts.coord_1.x, cts.coord_1.y});
 
-          cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBox(cts.img_2.box);
-          cells[cts.coord_1.x][cts.coord_1.y].getRect().setImagePng(cts.img_2.png);
+          cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBonbon({cts.img_2.box, cts.img_2.png});
           cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
 
           cells[cts.coord_1.x][cts.coord_1.y].setTypeColor(cts.type_2);
 
           //Cell 2
 
-          cells[cts.coord_2.x][cts.coord_2.y].setX(cts.coord_2.x);
-          cells[cts.coord_2.x][cts.coord_2.y].setY(cts.coord_2.y);
+          cells[cts.coord_2.x][cts.coord_2.y].setCoord({cts.coord_2.x,cts.coord_2.y});
 
-          cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBox(cts.img_1.box);
-          cells[cts.coord_2.x][cts.coord_2.y].getRect().setImagePng(cts.img_1.png);
+          cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBonbon({cts.img_1.box, cts.img_1.png});
           cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
 
           cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
