@@ -371,17 +371,11 @@ class Recurrence {
 
 void Recurrence::add(recurCount newP){
       // add si le dernier point du vecteur a une couleur differente de celle de newP
-      bool lastRecu = False;
-      if (!(recu.empty())){
-        if (recu.back().color == newP.color)
-        {
-          lastRecu = True;
-        }
-      }
-      if(!(lastRecu)){
+      if (((!recu.empty()) && recu.back().color != newP.color) || (recu.empty())){
         recu.push_back(newP);
       }
 }
+
 bool Recurrence::isPouf(){
     // return true si il y a eu une chaine >= 3 dans le vecteur
     bool pouf = false;
@@ -416,6 +410,7 @@ elsewhere it will probably crash.
 
 class Canvas {
   vector< vector<Cell> > cells;
+  vector<Point> toSwap; 
   Fl_Box* img_box = new Fl_Box(0, 0, 0, 0);
   Fl_PNG_Image* png_blank = new Fl_PNG_Image("bonbon/blank.png");
  public:
@@ -427,13 +422,14 @@ class Canvas {
   void mouseClick(Point mouseLoc);
   void keyPressed(int keyCode);
   void updateNeighbors();
-  void switchCells(vector< vector<Cell> > &cells, CTS cts);
+  void switchCells(CTS cts);
   void checkNeighbors();
   void checkNeighborsX();
   void checkNeighborsY();
-  void pouf(Recurrence recurrence, vector< vector<Cell> > &cells);
-  void setNulls(vector< vector<Cell> > &cells);
-  void decalageG(vector< vector<Cell> > &cells);
+  void pouf(Recurrence recurrence);
+  void setNulls();
+  void swapUP();
+  void decalageG();
   void printCells();
 };
 
@@ -498,12 +494,15 @@ void Canvas::mouseClick(Point mouseLoc) {
     }
     if (switched)
     {
-          switchCells(cells, cts);
+          switchCells(cts);
+          updateNeighbors();
+          resetClicks();
+          checkNeighbors();
     }
     checkClicks();
 }  
 
-void Canvas::switchCells(vector< vector<Cell> > &cells, CTS cts){
+void Canvas::switchCells(CTS cts){
           cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
           cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
 
@@ -526,11 +525,8 @@ void Canvas::switchCells(vector< vector<Cell> > &cells, CTS cts){
           cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
 
           cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
-
-          updateNeighbors();
-          resetClicks();
           //printCells();
-          checkNeighbors();
+          
 }
 
 void Canvas::resetClicks(){
@@ -555,7 +551,7 @@ void Canvas::checkClicks(){
     }    
 }
 
-void Canvas::setNulls(vector< vector<Cell> > &cells){
+void Canvas::setNulls(){
     // mets a zero la color de toutes les cells pointant vers blank (celles qui viennent d'exploser)
     for (auto &v: cells)
         for (auto &c: v){
@@ -564,6 +560,25 @@ void Canvas::setNulls(vector< vector<Cell> > &cells){
             c.setTypeColor(0);
           }
         }
+}
+    
+void Canvas::swapUP(){
+    for(auto point : toSwap){
+      int counter = 1;
+      if(point.x > 0){
+        while ((point.x-counter) >= 0 && cells[point.x-counter][point.y].getX() >= 0 && cells[point.x-counter][point.y].getTypeColor() != 0)
+        {
+          CTS cts = {cells[point.x-counter][point.y].getRect().getCenter(), cells[point.x-counter+1][point.y].getRect().getCenter(),
+                cells[point.x-counter][point.y].getRect().getImageBonbon(), cells[point.x-counter+1][point.y].getRect().getImageBonbon(),
+                cells[point.x-counter][point.y].getCoord(), cells[point.x-counter+1][point.y].getCoord(),
+                cells[point.x-counter][point.y].getTypeColor(), cells[point.x-counter+1][point.y].getTypeColor()};
+          switchCells(cts);
+          counter++;
+        }
+      }
+    }
+    printCells();
+    toSwap.clear();
 }
 
 
@@ -590,7 +605,8 @@ void Canvas::updateNeighbors(){
 void Canvas::checkNeighbors(){
 	checkNeighborsX();
 	checkNeighborsY();
-  setNulls(cells);
+  setNulls();
+  swapUP();
 }
 
 void Canvas::checkNeighborsX(){
@@ -610,7 +626,7 @@ void Canvas::checkNeighborsX(){
 			}
 		}
 		if (recurrence.isPouf()){
-      pouf(recurrence, cells);
+      pouf(recurrence);
     }
 	}
 }
@@ -632,26 +648,24 @@ void Canvas::checkNeighborsY(){
         }
       }
       if (recurrence.isPouf()){
-        pouf(recurrence, cells);
+        pouf(recurrence);
       }
   }
 }
 
-void Canvas::pouf(Recurrence recurrence, vector< vector<Cell> > &cells){
+void Canvas::pouf(Recurrence recurrence){
     //mets les images de toutes les cells en caine de min 3 a blank (implémenter explosion)
     for (auto &count : recurrence.getVec()){
-        if (count.amount >= 3){
-          for (auto &v : cells)
-            for (auto &c :v){
-              if ((count.start.x <= c.getCoord().x && c.getCoord().x <= count.finish.x) &&
-                  (count.start.y <= c.getCoord().y && c.getCoord().y <= count.finish.y)){
-                    c.getRect().getImageBox()->image(png_blank);
-              }
-            }
+      if(count.amount >= 3){
+        for(int i = count.start.x; i <= count.finish.x; i++){
+          for(int j = count.start.y; j <= count.finish.y; j++){
+            cells[i][j].getRect().getImageBox()->image(png_blank);
+            toSwap.push_back({i, j});
+          }
         }
+      }
     }
 }
-
 
 void Canvas::printCells(){
     for (auto &v: cells){
