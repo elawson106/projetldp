@@ -416,6 +416,7 @@ class Canvas {
   void setNulls();
   void decalageG(vector< vector<Cell> > &cells);
   void printCells();
+  void swapP();
 };
 
 Canvas::Canvas() {
@@ -480,6 +481,7 @@ void Canvas::mouseClick(Point mouseLoc) {
     if (switched)
     {
           switchCells(cts);
+		  checkNeighbors();
     }
     checkClicks();
 }  
@@ -511,7 +513,6 @@ void Canvas::switchCells(CTS cts){
 	updateNeighbors();
 	resetClicks();
 	//printCells();
-	checkNeighbors();
 }
 
 void Canvas::resetClicks(){
@@ -545,17 +546,30 @@ void Canvas::setNulls(){
             c.setTypeColor(0);
           }
     }
+}
 
+void Canvas::swapP(){
 	for(auto &cc : toSwap){
-		cout << cc->getX() << " -> x" << endl;
 		if(cc->getX() > 0){
-			Cell &temp = cells[cc->getX() - 1][cc->getY()];
-			if(cc->getTypeColor() == 0 && temp.getX() >= 0){
+			int counter = 1;
+			Point base = {cc->getX() - 1, cc->getY()};
+			while (cells[base.x][base.y].getTypeColor() != 0 && base.x > 0)
+			{	
+				//cout << "TEEEEEEEEEST   1 - " << base.x << endl;
+				Cell &temp = cells[base.x][base.y];
+				//cout << "TEEEEEEEEEST   2 - " << base.x << endl;
 				CTS cts = {cc->getRect().getCenter(), temp.getRect().getCenter(), 
 							cc->getRect().getImageBonbon(), temp.getRect().getImageBonbon(), 
 							cc->getCoord(), temp.getCoord(), cc->getTypeColor(), temp.getTypeColor()};
+				//cout << "TEEEEEEEEEST    3 - " << base.x << endl;
+				cout << "TEEEEEEEEEST    --- - " << cc->getX() << " - " << temp.getX() << endl;
 				switchCells(cts);
-				printf("ça marche");
+				setNulls();
+				//cout << "TEEEEEEEEEST    4 - " << base.x << endl;
+				base.x = temp.getX();
+				base.y = temp.getY();
+				cout << "TEEEEEEEEEST    6 - " << cc->getX() << " - " << temp.getX() << endl;
+				//checkNeighbors();
 			}
 		}
 	}
@@ -589,6 +603,7 @@ void Canvas::checkNeighbors(){
 	checkNeighborsX();
 	checkNeighborsY();
   	setNulls();
+	swapP();
   cout<< "-------------- Check done -------------"<< endl << endl;
 }
 
