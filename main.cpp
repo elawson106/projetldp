@@ -31,6 +31,13 @@ struct Point {
 	int x, y;
 };
 
+struct recurCount
+  //stocke la couleur, la taille et les coordonnées(debut et fin) des chaines de bonbons du plateau
+{
+  int color, amount;
+  Point start, finish;
+};
+
 
 
 struct ImageBonbon{
@@ -335,6 +342,43 @@ void Cell::mouseClick(Point mouseLoc) {
     }
 }
 
+class Recurrence {
+    // vecteur de compteurs de chaines(recurCount)
+    vector<recurCount> recu;
+  public:
+    //getters
+    vector<recurCount> &getVec(){return recu;}
+    //others
+    void add(recurCount newP); 
+    bool isPouf();
+};
+
+void Recurrence::add(recurCount newP){
+      // add si le dernier point du vecteur a une couleur differente de celle de newP
+      bool lastRecu = False;
+      if (!(recu.empty())){
+        if (recu.back().color == newP.color)
+        {
+          lastRecu = True;
+        }
+      }
+      if(!(lastRecu)){
+        recu.push_back(newP);
+      }
+}
+bool Recurrence::isPouf(){
+    // return true si il y a eu une chaine >= 3 dans le vecteur
+    bool pouf = false;
+    for(auto &elem : recu){
+			if(elem.amount >= 3){
+				cout << "Allignement de " << elem.amount << " bonbons de couleur " << elem.color << endl;
+        cout << "de la ligne " << elem.start.x << " à " << elem.finish.x << " et de la colonne "<< elem.start.y << " à " << elem.finish.y << endl ;
+        pouf = True;
+			}
+    }
+    return pouf;
+}
+
 
 /*--------------------------------------------------
 
@@ -358,6 +402,8 @@ elsewhere it will probably crash.
 
 class Canvas {
   vector< vector<Cell> > cells;
+  Fl_Box* img_box = new Fl_Box(0, 0, 0, 0);
+  Fl_PNG_Image* png_blank = new Fl_PNG_Image("bonbon/blank.png");
  public:
   Canvas();
   void draw();
@@ -371,13 +417,15 @@ class Canvas {
   void checkNeighbors();
   void checkNeighborsX();
   void checkNeighborsY();
+  void pouf(Recurrence recurrence, vector< vector<Cell> > &cells);
+  void setNulls(vector< vector<Cell> > &cells);
   void printCells();
 };
 
 Canvas::Canvas() {
-    string niveau;
+  string niveau;
 	ifstream file;
-    int b_type, id, elem;
+  int b_type, id, elem;
 	file.open("niveaux/1.txt");
 
 	for (int x = 0; x<9; x++) {
@@ -433,7 +481,6 @@ void Canvas::mouseClick(Point mouseLoc) {
             }
         }
     }
-    
     if (switched)
     {
           switchCells(cells, cts);
@@ -493,6 +540,16 @@ void Canvas::checkClicks(){
     }    
 }
 
+void Canvas::setNulls(vector< vector<Cell> > &cells){
+    for (auto &v: cells)
+        for (auto &c: v){
+          if (c.getRect().getImageBox()->image() == png_blank)
+          {
+            c.setTypeColor(0);
+          }
+        }
+}
+
 
 
 void Canvas::updateNeighbors(){
@@ -518,51 +575,8 @@ void Canvas::checkNeighbors(){
   cout<< "--------------Start Checking----------"<< endl << endl;
 	checkNeighborsX();
 	checkNeighborsY();
+  setNulls(cells);
   cout<< "-------------- Check done -------------"<< endl << endl;
-}
-
-struct recurCount
-  //stocke la couleur, la taille et les coordonnées(debut et fin) des chaines de bonbons du plateau
-{
-  int color, amount;
-  Point start, finish;
-};
-
-class Recurrence {
-    // vecteur de compteurs de chaines(recurCount)
-    vector<recurCount> recu;
-  public:
-    //getters
-    vector<recurCount> &getVec(){return recu;}
-    //others
-    void add(recurCount newP); 
-    bool isPouf();
-};
-
-void Recurrence::add(recurCount newP){
-      // add si le dernier point du vecteur a une couleur differente de celle de newP
-      bool lastRecu = False;
-      if (!(recu.empty())){
-        if (recu.back().color == newP.color)
-        {
-          lastRecu = True;
-        }
-      }
-      if(!(lastRecu)){
-        recu.push_back(newP);
-      }
-}
-bool Recurrence::isPouf(){
-    // return true si il y a eu une chaine >= 3 dans le vecteur
-    bool pouf = false;
-    for(auto &elem : recu){
-			if(elem.amount >= 3){
-				cout << "Allignement de " << elem.amount << " bonbons de couleur " << elem.color << endl;
-        cout << "de la ligne " << elem.start.x << " à " << elem.finish.x << " et de la colonne "<< elem.start.y << " à " << elem.finish.y << endl ;
-        pouf = True;
-			}
-    }
-    return pouf;
 }
 
 void Canvas::checkNeighborsX(){
@@ -580,7 +594,9 @@ void Canvas::checkNeighborsX(){
 				lastcolor = current;
 			}
 		}
-		if (recurrence.isPouf()){cout<<"        Pouf sur horrizontal"<<endl<<endl;}
+		if (recurrence.isPouf()){
+      pouf(recurrence, cells);
+      cout<<"        Pouf sur horrizontal"<<endl<<endl;}
 	}
 }
 
@@ -599,11 +615,26 @@ for(int x = 0; x < 9; x++){
 				lastcolor = current;                         
 			}
 		}
-		if (recurrence.isPouf()){cout<<"        Pouf sur vertical"<<endl<<endl;}
+		if (recurrence.isPouf()){
+      pouf(recurrence, cells);
+      cout<<"        Pouf sur vertical"<<endl<<endl;}
+       
 	}
 }
 
-
+void Canvas::pouf(Recurrence recurrence, vector< vector<Cell> > &cells){
+    for (auto &count : recurrence.getVec()){
+        if (count.amount >= 3){
+          for (auto &v : cells)
+            for (auto &c :v){
+              if ((count.start.x <= c.getCoord().x && c.getCoord().x <= count.finish.x) &&
+                  (count.start.y <= c.getCoord().y && c.getCoord().y <= count.finish.y)){
+                    c.getRect().getImageBox()->image(png_blank);
+              }
+            }
+        }
+    }
+}
 
 
 void Canvas::printCells(){
