@@ -6,6 +6,13 @@ MIGUEL LOZANO
 
 */
 
+/*
+ TODO definir tous les bonbons une fois dans canvas, faire passer leur adresse dans cell -> rectangle (vercteur<b_rouge, b_vert, etc)
+ comme ça on les initialise une seule fois et on ne fait pas trop de new + peut etre faire le switchcase initial de couleur dans canvas
+ et juste travailler avec set_imgbox
+ rajouter par niveau une ligne contenant tous les bonbons speciaux qui peuvent y apparaitre pour les initialiser aussi
+ a la fin du niveau for dans la liste des pointeurs et delete tous (pour contrer le new)
+*/
 
 // These should include everything you might use
 #include <FL/Fl.H>
@@ -31,14 +38,19 @@ struct Point {
 	int x, y;
 };
 
-struct recurCount
+struct Color_Image
+// stocke pour chaque type de bonbon son indice d'image color et l'adresse de son image en memeoire locImg
+{
+    int color;
+    Fl_PNG_Image* locImg;
+};
+
+struct RecurCount
   //stocke la couleur, la taille et les coordonnées(debut et fin) des chaines de bonbons du plateau
 {
   int color, amount;
   Point start, finish;
 };
-
-
 
 struct ImageBonbon{
 	Fl_Box* box;
@@ -133,16 +145,16 @@ should not need to edit it.
 
 class Rectangle {
   Point center;
-  int w, h, id, b_type;
+  int w, h, id;
   Fl_Color fillColor;
   Fl_Color frameColor = FL_BLACK;
 
   Fl_Box* img_box = new Fl_Box(center.x-w/2, center.y-h/2, w, h);
-  Fl_PNG_Image* png_img = nullptr;
+  Fl_PNG_Image* png_img;
 
  public:
   Rectangle(Point center, int w, int h,
-            int id, int b_type);
+            int id, Fl_PNG_Image* locpng);
 
   //setters
   void setFillColor(Fl_Color newFillColor);
@@ -186,40 +198,11 @@ class Rectangle {
 };
 
 Rectangle::Rectangle(Point center, int w, int h,
-                     int id, int b_type):
-                     center{center}, w{w}, h{h}, id{id}, b_type{b_type}
+                     int id, Fl_PNG_Image*  locpng):
+                     center{center}, w{w}, h{h}, id{id}, png_img{locpng}
                      {init();}
 
 void Rectangle::init(){
-		switch (b_type)
-		{
-		case 1:
-			png_img = new Fl_PNG_Image("bonbon/tile000.png");
-			break;
-
-		case 2:
-			png_img = new Fl_PNG_Image("bonbon/tile001.png");
-			break;
-
-		case 3:
-			png_img = new Fl_PNG_Image("bonbon/tile002.png");
-			break;
-
-		case 4:
-			png_img = new Fl_PNG_Image("bonbon/tile003.png");
-			break;
-
-		case 5:
-			png_img = new Fl_PNG_Image("bonbon/tile004.png");
-			break;
-
-		case 6:
-			png_img = new Fl_PNG_Image("bonbon/tile005.png");
-			break;
-		
-		default:
-			break;
-		}
 	img_box->image(png_img);
 }
 
@@ -227,7 +210,7 @@ void Rectangle::draw() {
     //fl_draw_box(FL_FLAT_BOX, center.x-w/2, center.y-h/2, w, h, fillColor);
     fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
     Text(to_string(id), {center.x + 30, center.y + 30}).draw();
-	img_box->redraw();
+	  img_box->redraw();
 }
 
 void Rectangle::setFillColor(Fl_Color newFillColor) {
@@ -265,7 +248,7 @@ class Cell {
   vector<Cell *> neighbors;
  public:
   // Constructor
-  Cell(Point center, int w, int h, int color, int id, int ligne, int colonne);
+  Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int colonne);
   //Setters
   void setTypeColor(int col){color = col;}
   void setX(int x){ ligne = x;}
@@ -304,9 +287,9 @@ class Cell {
 
 };
 
-Cell::Cell(Point center, int w, int h, int color, int id, int ligne, int colonne):
-	r(center, w, h,id, color),
-	color{color},
+Cell::Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int colonne):
+	r(center, w, h,id, color.locImg),
+	color{color.color},
 	id{id},
 	ligne{ligne},
 	colonne{colonne}
@@ -342,30 +325,40 @@ void Cell::mouseClick(Point mouseLoc) {
     }
 }
 
+/*--------------------------------------------------
+
+Canvas Recurrence
+
+Classe comportant un vecteur de compteur, compteur qui contient:
+int color : la couleur qui se répète
+int amount : la taille de la chaine
+Point start : Point contenant les coords de debut de la chaine
+Point finish : Point contenant les coords de fin de la chaine
+
+--------------------------------------------------*/
 class Recurrence {
     // vecteur de compteurs de chaines(recurCount)
-    vector<recurCount> recu;
+    vector<RecurCount> recu;
   public:
     //getters
-    vector<recurCount> &getVec(){return recu;}
+    vector<RecurCount> &getVec(){return recu;}
     //others
-    void add(recurCount newP); 
+    void add(RecurCount newP); 
     bool isPouf();
 };
 
-void Recurrence::add(recurCount newP){
+void Recurrence::add(RecurCount newP){
       // add si le dernier point du vecteur a une couleur differente de celle de newP
       if (((!recu.empty()) && recu.back().color != newP.color) || (recu.empty())){
         recu.push_back(newP);
       }
 }
+
 bool Recurrence::isPouf(){
     // return true si il y a eu une chaine >= 3 dans le vecteur
     bool pouf = false;
     for(auto &elem : recu){
 			if(elem.amount >= 3){
-				cout << "Allignement de " << elem.amount << " bonbons de couleur " << elem.color << endl;
-        cout << "de la ligne " << elem.start.x << " à " << elem.finish.x << " et de la colonne "<< elem.start.y << " à " << elem.finish.y << endl ;
         pouf = True;
 			}
     }
@@ -393,12 +386,133 @@ elsewhere it will probably crash.
 --------------------------------------------------*/
 
 
+class Img_vector {
+    vector<Color_Image> images;
+   public:
+  // Constructor
+    Img_vector() {init();};
+  // getters
+    Fl_PNG_Image* blank(){return images[0].locImg;}
+    Color_Image getImginf(int color);
+  // others
+    void init();
+    void add(int color);
+};
+
+void Img_vector::init(){
+  //initialise le vecteur avec Blank comme premier element
+  Fl_PNG_Image* png_blank = new Fl_PNG_Image("bonbon/blank.png");
+  images.push_back({0, png_blank});
+}
+
+void Img_vector::add(int color) {
+  //initialise l'image et l'ajoute dans le vecteur avec son int color sous forme de color_image
+  Fl_PNG_Image* png_img;
+  bool in = False;
+  for (auto &img : images)
+    if (img.color == color){
+      in = True;
+    }
+  if (!(in))
+  {
+    switch (color)
+      {
+      case 1:
+      //basiques
+        png_img = new Fl_PNG_Image("bonbon/tile000.png");
+        images.push_back({1, png_img});
+        break;
+      case 2:
+        png_img = new Fl_PNG_Image("bonbon/tile001.png");
+        images.push_back({2, png_img});
+        break;
+      case 3:
+        png_img = new Fl_PNG_Image("bonbon/tile002.png");
+        images.push_back({3, png_img});
+        break;
+      case 4:
+        png_img = new Fl_PNG_Image("bonbon/tile003.png");
+        images.push_back({4, png_img});
+        break;
+      case 5:
+        png_img = new Fl_PNG_Image("bonbon/tile004.png");
+        images.push_back({5, png_img});
+        break;
+      case 6:
+        png_img = new Fl_PNG_Image("bonbon/tile005.png");
+        images.push_back({6, png_img});
+        break;
+      //sweepers
+      case 7:
+        png_img = new Fl_PNG_Image("bonbon/tile014.png");
+        images.push_back({7, png_img});
+        break;
+      case 8:
+        png_img = new Fl_PNG_Image("bonbon/tile015.png");
+        images.push_back({8, png_img});
+        break;
+      case 9:
+        png_img = new Fl_PNG_Image("bonbon/tile016.png");
+        images.push_back({9, png_img});
+        break;
+      case 10:
+        png_img = new Fl_PNG_Image("bonbon/tile017.png");
+        images.push_back({10, png_img});
+        break;
+      case 11:
+        png_img = new Fl_PNG_Image("bonbon/tile018.png");
+        images.push_back({11, png_img});
+        break;
+      case 12:
+        png_img = new Fl_PNG_Image("bonbon/tile019.png");
+        images.push_back({12, png_img});
+        break;
+      //bombes
+      case 13:
+        png_img = new Fl_PNG_Image("bonbon/tile028.png");
+        images.push_back({13, png_img});
+        break;
+      case 14:
+        png_img = new Fl_PNG_Image("bonbon/tile029.png");
+        images.push_back({14, png_img});
+        break;
+      case 15:
+        png_img = new Fl_PNG_Image("bonbon/tile030.png");
+        images.push_back({15, png_img});
+        break;
+      case 16:
+        png_img = new Fl_PNG_Image("bonbon/tile031.png");
+        images.push_back({16, png_img});
+        break;
+      case 17:
+        png_img = new Fl_PNG_Image("bonbon/tile032.png");
+        images.push_back({17, png_img});
+        break;
+      case 18:
+        png_img = new Fl_PNG_Image("bonbon/tile033.png");
+        images.push_back({18, png_img});
+        break;
+              
+      default:
+        break;
+      }
+  }
+  
+}
+
+Color_Image Img_vector::getImginf(int color) {
+  //renvoie la {color_image} de la couleur color d'entrée
+  for (auto &img_inf : images)
+    if (img_inf.color == color){
+      return img_inf;
+    }
+  return images[0];   // si on ne trouve pas l'image, return Blank
+}
+
 class Canvas {
   vector< vector<Cell> > cells;
-	vector<Cell *> toSwap;
-
-  Fl_Box* img_box = new Fl_Box(0, 0, 0, 0);
-  Fl_PNG_Image* png_blank = new Fl_PNG_Image("bonbon/blank.png");
+  vector<Point> toSwap;
+  Img_vector images;
  public:
   Canvas();
   void draw();
@@ -414,9 +528,9 @@ class Canvas {
   void checkNeighborsY();
   void pouf(Recurrence recurrence);
   void setNulls();
-  void decalageG(vector< vector<Cell> > &cells);
+  void swapUP();
+  void decalageG();
   void printCells();
-  void swapP();
 };
 
 Canvas::Canvas() {
@@ -428,14 +542,14 @@ Canvas::Canvas() {
 	for (int x = 0; x<9; x++) {
 		cells.push_back({});
 	}
-    
 	for (int x = 0; x<9; x++){
         getline(file, niveau);
         elem = 0;
 		for (int y = 0; y<9; y++){
 			b_type = niveau[elem] - '0';
+      images.add(b_type);
       id = y + ((x * 9));
-			cells[x].push_back({{100*y+50, 100*x+150}, 100, 100,b_type,id, x, y});
+			cells[x].push_back({{100*y+50, 100*x+150}, 100, 100,images.getImginf(b_type),id, x, y});
 			elem++;
 		}
 	}
@@ -471,9 +585,9 @@ void Canvas::mouseClick(Point mouseLoc) {
                     ImageBonbon ib_2 = n->getRect().getImageBonbon();
 
                     Point coord_1 = c.getCoord();
-					Point coord_2 = n->getCoord();
+				          	Point coord_2 = n->getCoord();
 
-					CTS cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
+				          	CTS cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
                 }
             }
         }
@@ -481,38 +595,38 @@ void Canvas::mouseClick(Point mouseLoc) {
     if (switched)
     {
           switchCells(cts);
-		  checkNeighbors();
+          resetClicks();
+          checkNeighbors();
     }
     checkClicks();
 }  
 
 void Canvas::switchCells(CTS cts){
-	cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
-	cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
+          cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
+          cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
 
-	swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);  // echange les 2 cells dans la liste cells
+          swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);  // echange les 2 cells dans la liste cells
 
-	//Cell 1
+          //Cell 1
 
-	cells[cts.coord_1.x][cts.coord_1.y].setCoord({cts.coord_1.x, cts.coord_1.y});
+          cells[cts.coord_1.x][cts.coord_1.y].setCoord({cts.coord_1.x, cts.coord_1.y});
 
-	cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBonbon({cts.img_2.box, cts.img_2.png});
-	cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
+          cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBonbon({cts.img_2.box, cts.img_2.png});
+          cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
 
-	cells[cts.coord_1.x][cts.coord_1.y].setTypeColor(cts.type_2);
+          cells[cts.coord_1.x][cts.coord_1.y].setTypeColor(cts.type_2);
 
-	//Cell 2
+          //Cell 2
 
-	cells[cts.coord_2.x][cts.coord_2.y].setCoord({cts.coord_2.x,cts.coord_2.y});
+          cells[cts.coord_2.x][cts.coord_2.y].setCoord({cts.coord_2.x,cts.coord_2.y});
 
-	cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBonbon({cts.img_1.box, cts.img_1.png});
-	cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
+          cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBonbon({cts.img_1.box, cts.img_1.png});
+          cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
 
-	cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
-
-	updateNeighbors();
-	resetClicks();
-	//printCells();
+          cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
+          //printCells();
+          updateNeighbors();
+          
 }
 
 void Canvas::resetClicks(){
@@ -541,40 +655,38 @@ void Canvas::setNulls(){
     // mets a zero la color de toutes les cells pointant vers blank (celles qui viennent d'exploser)
     for (auto &v: cells)
         for (auto &c: v){
-          if (c.getRect().getImageBox()->image() == png_blank)
+          if (c.getRect().getImageBox()->image() == images.blank())
           {
-            c.setTypeColor(0);
+            //c.setTypeColor(0);
+			int randColor = (rand() % 6) + 1;
+			c.setTypeColor(randColor);
+			//c.getRect().getImageBonbon().png = ;
+			c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg);
           }
-    }
+        }
 }
-
-void Canvas::swapP(){
-	for(auto &cc : toSwap){
-		if(cc->getX() > 0){
-			int counter = 1;
-			Point base = {cc->getX() - 1, cc->getY()};
-			while (cells[base.x][base.y].getTypeColor() != 0 && base.x > 0)
-			{	
-				//cout << "TEEEEEEEEEST   1 - " << base.x << endl;
-				Cell &temp = cells[base.x][base.y];
-				//cout << "TEEEEEEEEEST   2 - " << base.x << endl;
-				CTS cts = {cc->getRect().getCenter(), temp.getRect().getCenter(), 
-							cc->getRect().getImageBonbon(), temp.getRect().getImageBonbon(), 
-							cc->getCoord(), temp.getCoord(), cc->getTypeColor(), temp.getTypeColor()};
-				//cout << "TEEEEEEEEEST    3 - " << base.x << endl;
-				cout << "TEEEEEEEEEST    --- - " << cc->getX() << " - " << temp.getX() << endl;
-				switchCells(cts);
-				setNulls();
-				//cout << "TEEEEEEEEEST    4 - " << base.x << endl;
-				base.x = temp.getX();
-				base.y = temp.getY();
-				cout << "TEEEEEEEEEST    6 - " << cc->getX() << " - " << temp.getX() << endl;
-				//checkNeighbors();
-			}
-		}
-	}
-
-	toSwap.clear();
+    
+void Canvas::swapUP(){
+    // decale la chaine de cells qui vient de pop (toSwap) vers le haut du tableau
+    for(auto point : toSwap){
+      int counter = 1;
+      if(point.x > 0){
+        while ((point.x-counter) >= 0 && cells[point.x-counter][point.y].getX() >= 0 && cells[point.x-counter][point.y].getTypeColor() != 0)
+        {
+          CTS cts = {cells[point.x-counter][point.y].getRect().getCenter(), cells[point.x-counter+1][point.y].getRect().getCenter(),
+                cells[point.x-counter][point.y].getRect().getImageBonbon(), cells[point.x-counter+1][point.y].getRect().getImageBonbon(),
+                cells[point.x-counter][point.y].getCoord(), cells[point.x-counter+1][point.y].getCoord(),
+                cells[point.x-counter][point.y].getTypeColor(), cells[point.x-counter+1][point.y].getTypeColor()};
+          switchCells(cts);
+          counter++;
+        }
+      }
+    }
+    toSwap.clear();
+	checkNeighborsX();
+	checkNeighborsY();
+	setNulls();
+    printCells();
 }
 
 
@@ -599,34 +711,35 @@ void Canvas::updateNeighbors(){
 }
 
 void Canvas::checkNeighbors(){
-  cout<< "--------------Start Checking----------"<< endl << endl;
 	checkNeighborsX();
 	checkNeighborsY();
-  	setNulls();
-	swapP();
-  cout<< "-------------- Check done -------------"<< endl << endl;
+  setNulls();
+  swapUP();
 }
 
 void Canvas::checkNeighborsX(){
-  //check si il y a des allignement de min 3 sur les horrizontales 
-	for(int x = 0; x < 9; x++){
-		int lastcolor = -1;
-		Recurrence recurrence;
-		for(int y = 0; y < 9; y++){
-			Cell &c = cells[x][y];
-			int current = c.getTypeColor();     // Prends la couleur de la case actuelle 
-			recurrence.add({current, 1, {x, y}, {x, y}});     // Initialise son compteur dans le vecteur de recurrence/ne fait rien si on est dans une chaine
-			if (lastcolor == current){
-				recurrence.getVec().back().amount++;            // incremente la compteur de la couleur current si il y a une chaine
-        		recurrence.getVec().back().finish = {x,y};      // redefinis la fin de la chaine
-			}else{
-				lastcolor = current;
-			}
-		}
-		if (recurrence.isPouf()){
-			pouf(recurrence);
-			cout<<"        Pouf sur horizontal"<<endl<<endl;}
-	}
+  //check si il y a des allignement de min 3 sur les horizontales 
+ for(int x = 0; x < 9; x++){
+      int lastcolor = -1;
+      Recurrence recurrence;
+      for(int y = 0; y < 9; y++){
+        Cell &c = cells[x][y];
+        int current = c.getTypeColor(); 
+        if (current != 0){
+          recurrence.add({current, 1, {x, y}, {x, y}});  
+          if (lastcolor == current){
+            recurrence.getVec().back().amount++;        
+            recurrence.getVec().back().finish = {x,y};   
+          }
+          else{
+          lastcolor = current;                         
+          }
+        }
+      }
+      if (recurrence.isPouf()){
+        pouf(recurrence);
+      }
+  }
 }
 
 void Canvas::checkNeighborsY(){
@@ -637,40 +750,47 @@ void Canvas::checkNeighborsY(){
       for(int y = 0; y < 9; y++){
         Cell &c = cells[y][x];
         int current = c.getTypeColor(); 
-        recurrence.add({current, 1, {y, x}, {y, x}});  
-        if (lastcolor == current){
-          recurrence.getVec().back().amount++;        
-          recurrence.getVec().back().finish = {y,x};   
-        }else{
+        if (current != 0){
+          recurrence.add({current, 1, {y, x}, {y, x}});  
+          if (lastcolor == current){
+            recurrence.getVec().back().amount++;        
+            recurrence.getVec().back().finish = {y,x};   
+          }
+          else{
           lastcolor = current;                         
+          }
         }
       }
       if (recurrence.isPouf()){
         pouf(recurrence);
-        cout<<"        Pouf sur vertical"<<endl<<endl;}
-        
-    }
+      }
   }
+}
 
 void Canvas::pouf(Recurrence recurrence){
     //mets les images de toutes les cells en caine de min 3 a blank (implémenter explosion)
     for (auto &count : recurrence.getVec()){
-		if(count.amount >= 3){
-			for(int i = count.start.x; i <= count.finish.x; i++){
-				for(int j = count.start.y; j <= count.finish.y; j++){
-					cells[i][j].getRect().getImageBox()->image(png_blank);
-					toSwap.push_back(&cells[i][j]);
-				}
-			}
-		}
+      if(count.amount >= 3){
+        for(int i = count.start.x; i <= count.finish.x; i++){
+          for(int j = count.start.y; j <= count.finish.y; j++){
+            cells[i][j].getRect().getImageBox()->image(images.blank());
+            toSwap.push_back({i, j});
+          }
+        }
+      }
     }
 }
-
 
 void Canvas::printCells(){
     for (auto &v: cells){
         for (auto &c: v){
+          if (c.getId() < 10)
+          {
+            cout << "0" << c.getId() << " ; ";
+          }
+          else{
             cout << c.getId() << " ; ";
+          }
         }
         cout << endl;
     }
