@@ -38,6 +38,13 @@ struct Point {
 	int x, y;
 };
 
+struct color_image
+// stocke pour chaque type de bonbon son indice d'image color et l'adresse de son image en memeoire locImg
+{
+    int color;
+    Fl_PNG_Image* locImg;
+};
+
 struct recurCount
   //stocke la couleur, la taille et les coordonnées(debut et fin) des chaines de bonbons du plateau
 {
@@ -138,16 +145,16 @@ should not need to edit it.
 
 class Rectangle {
   Point center;
-  int w, h, id, b_type;
+  int w, h, id;
   Fl_Color fillColor;
   Fl_Color frameColor = FL_BLACK;
 
   Fl_Box* img_box = new Fl_Box(center.x-w/2, center.y-h/2, w, h);
-  Fl_PNG_Image* png_img = nullptr;
+  Fl_PNG_Image* png_img;
 
  public:
   Rectangle(Point center, int w, int h,
-            int id, int b_type);
+            int id, Fl_PNG_Image* locpng);
 
   //setters
   void setFillColor(Fl_Color newFillColor);
@@ -191,40 +198,11 @@ class Rectangle {
 };
 
 Rectangle::Rectangle(Point center, int w, int h,
-                     int id, int b_type):
-                     center{center}, w{w}, h{h}, id{id}, b_type{b_type}
+                     int id, Fl_PNG_Image*  locpng):
+                     center{center}, w{w}, h{h}, id{id}, png_img{locpng}
                      {init();}
 
 void Rectangle::init(){
-		switch (b_type)
-		{
-		case 1:
-			png_img = new Fl_PNG_Image("bonbon/tile000.png");
-			break;
-
-		case 2:
-			png_img = new Fl_PNG_Image("bonbon/tile001.png");
-			break;
-
-		case 3:
-			png_img = new Fl_PNG_Image("bonbon/tile002.png");
-			break;
-
-		case 4:
-			png_img = new Fl_PNG_Image("bonbon/tile003.png");
-			break;
-
-		case 5:
-			png_img = new Fl_PNG_Image("bonbon/tile004.png");
-			break;
-
-		case 6:
-			png_img = new Fl_PNG_Image("bonbon/tile005.png");
-			break;
-		
-		default:
-			break;
-		}
 	img_box->image(png_img);
 }
 
@@ -232,7 +210,7 @@ void Rectangle::draw() {
     //fl_draw_box(FL_FLAT_BOX, center.x-w/2, center.y-h/2, w, h, fillColor);
     fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
     Text(to_string(id), {center.x + 30, center.y + 30}).draw();
-	img_box->redraw();
+	  img_box->redraw();
 }
 
 void Rectangle::setFillColor(Fl_Color newFillColor) {
@@ -270,7 +248,7 @@ class Cell {
   vector<Cell *> neighbors;
  public:
   // Constructor
-  Cell(Point center, int w, int h, int color, int id, int ligne, int colonne);
+  Cell(Point center, int w, int h, color_image color, int id, int ligne, int colonne);
   //Setters
   void setTypeColor(int col){color = col;}
   void setX(int x){ ligne = x;}
@@ -309,9 +287,9 @@ class Cell {
 
 };
 
-Cell::Cell(Point center, int w, int h, int color, int id, int ligne, int colonne):
-	r(center, w, h,id, color),
-	color{color},
+Cell::Cell(Point center, int w, int h, color_image color, int id, int ligne, int colonne):
+	r(center, w, h,id, color.locImg),
+	color{color.color},
 	id{id},
 	ligne{ligne},
 	colonne{colonne}
@@ -408,11 +386,133 @@ elsewhere it will probably crash.
 --------------------------------------------------*/
 
 
+class Img_vector {
+    vector<color_image > images;
+   public:
+  // Constructor
+    Img_vector() {init();};
+  // getters
+    Fl_PNG_Image* blank(){return images[0].locImg;}
+    color_image getImginf(int color);
+  // others
+    void init();
+    void add(int color);
+};
+
+void Img_vector::init(){
+  //initialise le vecteur avec Blank comme premier element
+  Fl_PNG_Image* png_blank = new Fl_PNG_Image("bonbon/blank.png");
+  images.push_back({0, png_blank});
+}
+
+void Img_vector::add(int color) {
+  //initialise l'image et l'ajoute dans le vecteur avec son int color sous forme de color_image
+  Fl_PNG_Image* png_img;
+  bool in = False;
+  for (auto &img : images)
+    if (img.color == color){
+      in = True;
+    }
+  if (!(in))
+  {
+    switch (color)
+      {
+      case 1:
+      //basiques
+        png_img = new Fl_PNG_Image("bonbon/tile000.png");
+        images.push_back({1, png_img});
+        break;
+      case 2:
+        png_img = new Fl_PNG_Image("bonbon/tile001.png");
+        images.push_back({2, png_img});
+        break;
+      case 3:
+        png_img = new Fl_PNG_Image("bonbon/tile002.png");
+        images.push_back({3, png_img});
+        break;
+      case 4:
+        png_img = new Fl_PNG_Image("bonbon/tile003.png");
+        images.push_back({4, png_img});
+        break;
+      case 5:
+        png_img = new Fl_PNG_Image("bonbon/tile004.png");
+        images.push_back({5, png_img});
+        break;
+      case 6:
+        png_img = new Fl_PNG_Image("bonbon/tile005.png");
+        images.push_back({6, png_img});
+        break;
+      //sweepers
+      case 7:
+        png_img = new Fl_PNG_Image("bonbon/tile014.png");
+        images.push_back({7, png_img});
+        break;
+      case 8:
+        png_img = new Fl_PNG_Image("bonbon/tile015.png");
+        images.push_back({8, png_img});
+        break;
+      case 9:
+        png_img = new Fl_PNG_Image("bonbon/tile016.png");
+        images.push_back({9, png_img});
+        break;
+      case 10:
+        png_img = new Fl_PNG_Image("bonbon/tile017.png");
+        images.push_back({10, png_img});
+        break;
+      case 11:
+        png_img = new Fl_PNG_Image("bonbon/tile018.png");
+        images.push_back({11, png_img});
+        break;
+      case 12:
+        png_img = new Fl_PNG_Image("bonbon/tile019.png");
+        images.push_back({12, png_img});
+        break;
+      //bombes
+      case 13:
+        png_img = new Fl_PNG_Image("bonbon/tile028.png");
+        images.push_back({13, png_img});
+        break;
+      case 14:
+        png_img = new Fl_PNG_Image("bonbon/tile029.png");
+        images.push_back({14, png_img});
+        break;
+      case 15:
+        png_img = new Fl_PNG_Image("bonbon/tile030.png");
+        images.push_back({15, png_img});
+        break;
+      case 16:
+        png_img = new Fl_PNG_Image("bonbon/tile031.png");
+        images.push_back({16, png_img});
+        break;
+      case 17:
+        png_img = new Fl_PNG_Image("bonbon/tile032.png");
+        images.push_back({17, png_img});
+        break;
+      case 18:
+        png_img = new Fl_PNG_Image("bonbon/tile033.png");
+        images.push_back({18, png_img});
+        break;
+              
+      default:
+        break;
+      }
+  }
+  
+}
+
+color_image Img_vector::getImginf(int color) {
+  //renvoie la {color_image} de la couleur color d'entrée
+  for (auto &img_inf : images)
+    if (img_inf.color == color){
+      return img_inf;
+    }
+  return images[0];   // si on ne trouve pas l'image, return Blank
+}
+
 class Canvas {
   vector< vector<Cell> > cells;
-  vector<Point> toSwap; 
-  Fl_Box* img_box = new Fl_Box(0, 0, 0, 0);
-  Fl_PNG_Image* png_blank = new Fl_PNG_Image("bonbon/blank.png");
+  vector<Point> toSwap;
+  Img_vector images;
  public:
   Canvas();
   void draw();
@@ -442,14 +542,14 @@ Canvas::Canvas() {
 	for (int x = 0; x<9; x++) {
 		cells.push_back({});
 	}
-    
 	for (int x = 0; x<9; x++){
         getline(file, niveau);
         elem = 0;
 		for (int y = 0; y<9; y++){
 			b_type = niveau[elem] - '0';
+      images.add(b_type);
       id = y + ((x * 9));
-			cells[x].push_back({{100*y+50, 100*x+150}, 100, 100,b_type,id, x, y});
+			cells[x].push_back({{100*y+50, 100*x+150}, 100, 100,images.getImginf(b_type),id, x, y});
 			elem++;
 		}
 	}
@@ -555,7 +655,7 @@ void Canvas::setNulls(){
     // mets a zero la color de toutes les cells pointant vers blank (celles qui viennent d'exploser)
     for (auto &v: cells)
         for (auto &c: v){
-          if (c.getRect().getImageBox()->image() == png_blank)
+          if (c.getRect().getImageBox()->image() == images.blank())
           {
             c.setTypeColor(0);
           }
@@ -563,6 +663,7 @@ void Canvas::setNulls(){
 }
     
 void Canvas::swapUP(){
+    // decale la chaine de cells qui vient de pop (toSwap) vers le haut du tableau
     for(auto point : toSwap){
       int counter = 1;
       if(point.x > 0){
@@ -577,7 +678,6 @@ void Canvas::swapUP(){
         }
       }
     }
-    printCells();
     toSwap.clear();
 }
 
@@ -659,7 +759,7 @@ void Canvas::pouf(Recurrence recurrence){
       if(count.amount >= 3){
         for(int i = count.start.x; i <= count.finish.x; i++){
           for(int j = count.start.y; j <= count.finish.y; j++){
-            cells[i][j].getRect().getImageBox()->image(png_blank);
+            cells[i][j].getRect().getImageBox()->image(images.blank());
             toSwap.push_back({i, j});
           }
         }
