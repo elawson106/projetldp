@@ -419,6 +419,7 @@ class Canvas {
   void checkNeighborsY();
   void pouf(Recurrence recurrence, vector< vector<Cell> > &cells);
   void setNulls(vector< vector<Cell> > &cells);
+  void decalageG(vector< vector<Cell> > &cells);
   void printCells();
 };
 
@@ -541,6 +542,7 @@ void Canvas::checkClicks(){
 }
 
 void Canvas::setNulls(vector< vector<Cell> > &cells){
+    // mets a zero la color de toutes les cells pointant vers blank (celles qui viennent d'exploser)
     for (auto &v: cells)
         for (auto &c: v){
           if (c.getRect().getImageBox()->image() == png_blank)
@@ -580,6 +582,7 @@ void Canvas::checkNeighbors(){
 }
 
 void Canvas::checkNeighborsX(){
+  //check si il y a des allignement de min 3 sur les horrizontales 
 	for(int x = 0; x < 9; x++){
 		int lastcolor = -1;
 		Recurrence recurrence;
@@ -601,28 +604,30 @@ void Canvas::checkNeighborsX(){
 }
 
 void Canvas::checkNeighborsY(){
-for(int x = 0; x < 9; x++){
-		int lastcolor = -1;
-		Recurrence recurrence;
-		for(int y = 0; y < 9; y++){
-			Cell &c = cells[y][x];
-			int current = c.getTypeColor(); 
-			recurrence.add({current, 1, {y, x}, {y, x}});  
-			if (lastcolor == current){
-				recurrence.getVec().back().amount++;        
-        recurrence.getVec().back().finish = {y,x};   
-			}else{
-				lastcolor = current;                         
-			}
-		}
-		if (recurrence.isPouf()){
-      pouf(recurrence, cells);
-      cout<<"        Pouf sur vertical"<<endl<<endl;}
-       
-	}
-}
+  //check si il y a des allignement de min 3 sur les verticales 
+  for(int x = 0; x < 9; x++){
+      int lastcolor = -1;
+      Recurrence recurrence;
+      for(int y = 0; y < 9; y++){
+        Cell &c = cells[y][x];
+        int current = c.getTypeColor(); 
+        recurrence.add({current, 1, {y, x}, {y, x}});  
+        if (lastcolor == current){
+          recurrence.getVec().back().amount++;        
+          recurrence.getVec().back().finish = {y,x};   
+        }else{
+          lastcolor = current;                         
+        }
+      }
+      if (recurrence.isPouf()){
+        pouf(recurrence, cells);
+        cout<<"        Pouf sur vertical"<<endl<<endl;}
+        
+    }
+  }
 
 void Canvas::pouf(Recurrence recurrence, vector< vector<Cell> > &cells){
+    //mets les images de toutes les cells en caine de min 3 a blank (implémenter explosion)
     for (auto &count : recurrence.getVec()){
         if (count.amount >= 3){
           for (auto &v : cells)
