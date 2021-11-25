@@ -679,6 +679,7 @@ void Canvas::swapUP(){
       }
     }
     toSwap.clear();
+    printCells();
 }
 
 
@@ -711,24 +712,27 @@ void Canvas::checkNeighbors(){
 
 void Canvas::checkNeighborsX(){
   //check si il y a des allignement de min 3 sur les horrizontales 
-	for(int x = 0; x < 9; x++){
-		int lastcolor = -1;
-		Recurrence recurrence;
-		for(int y = 0; y < 9; y++){
-			Cell &c = cells[x][y];
-			int current = c.getTypeColor();     // Prends la couleur de la case actuelle 
-			recurrence.add({current, 1, {x, y}, {x, y}});     // Initialise son compteur dans le vecteur de recurrence/ne fait rien si on est dans une chaine
-			if (lastcolor == current){
-				recurrence.getVec().back().amount++;            // incremente la compteur de la couleur current si il y a une chaine
-        recurrence.getVec().back().finish = {x,y};      // redefinis la fin de la chaine
-			}else{
-				lastcolor = current;
-			}
-		}
-		if (recurrence.isPouf()){
-      pouf(recurrence);
-    }
-	}
+ for(int x = 0; x < 9; x++){
+      int lastcolor = -1;
+      Recurrence recurrence;
+      for(int y = 0; y < 9; y++){
+        Cell &c = cells[x][y];
+        int current = c.getTypeColor(); 
+        if (current != 0){
+          recurrence.add({current, 1, {x, y}, {x, y}});  
+          if (lastcolor == current){
+            recurrence.getVec().back().amount++;        
+            recurrence.getVec().back().finish = {x,y};   
+          }
+          else{
+          lastcolor = current;                         
+          }
+        }
+      }
+      if (recurrence.isPouf()){
+        pouf(recurrence);
+      }
+  }
 }
 
 void Canvas::checkNeighborsY(){
@@ -739,12 +743,15 @@ void Canvas::checkNeighborsY(){
       for(int y = 0; y < 9; y++){
         Cell &c = cells[y][x];
         int current = c.getTypeColor(); 
-        recurrence.add({current, 1, {y, x}, {y, x}});  
-        if (lastcolor == current){
-          recurrence.getVec().back().amount++;        
-          recurrence.getVec().back().finish = {y,x};   
-        }else{
+        if (current != 0){
+          recurrence.add({current, 1, {y, x}, {y, x}});  
+          if (lastcolor == current){
+            recurrence.getVec().back().amount++;        
+            recurrence.getVec().back().finish = {y,x};   
+          }
+          else{
           lastcolor = current;                         
+          }
         }
       }
       if (recurrence.isPouf()){
@@ -770,7 +777,13 @@ void Canvas::pouf(Recurrence recurrence){
 void Canvas::printCells(){
     for (auto &v: cells){
         for (auto &c: v){
+          if (c.getId() < 10)
+          {
+            cout << "0" << c.getId() << " ; ";
+          }
+          else{
             cout << c.getId() << " ; ";
+          }
         }
         cout << endl;
     }
