@@ -595,7 +595,6 @@ void Canvas::mouseClick(Point mouseLoc) {
     if (switched)
     {
           switchCells(cts);
-          updateNeighbors();
           resetClicks();
           checkNeighbors();
     }
@@ -626,6 +625,7 @@ void Canvas::switchCells(CTS cts){
 
           cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
           //printCells();
+          updateNeighbors();
           
 }
 
