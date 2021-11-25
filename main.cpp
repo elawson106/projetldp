@@ -395,6 +395,8 @@ elsewhere it will probably crash.
 
 class Canvas {
   vector< vector<Cell> > cells;
+	vector<Cell *> toSwap;
+
   Fl_Box* img_box = new Fl_Box(0, 0, 0, 0);
   Fl_PNG_Image* png_blank = new Fl_PNG_Image("bonbon/blank.png");
  public:
@@ -406,7 +408,7 @@ class Canvas {
   void mouseClick(Point mouseLoc);
   void keyPressed(int keyCode);
   void updateNeighbors();
-  void switchCells(vector< vector<Cell> > &cells, CTS cts);
+  void switchCells(CTS cts);
   void checkNeighbors();
   void checkNeighborsX();
   void checkNeighborsY();
@@ -477,12 +479,12 @@ void Canvas::mouseClick(Point mouseLoc) {
     }
     if (switched)
     {
-          switchCells(cells, cts);
+          switchCells(cts);
     }
     checkClicks();
 }  
 
-void Canvas::switchCells(vector< vector<Cell> > &cells, CTS cts){
+void Canvas::switchCells(CTS cts){
 	cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
 	cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
 
@@ -543,6 +545,22 @@ void Canvas::setNulls(){
             c.setTypeColor(0);
           }
     }
+
+	for(auto &cc : toSwap){
+		cout << cc->getX() << " -> x" << endl;
+		if(cc->getX() > 0){
+			Cell &temp = cells[cc->getX() - 1][cc->getY()];
+			if(cc->getTypeColor() == 0 && temp.getX() >= 0){
+				CTS cts = {cc->getRect().getCenter(), temp.getRect().getCenter(), 
+							cc->getRect().getImageBonbon(), temp.getRect().getImageBonbon(), 
+							cc->getCoord(), temp.getCoord(), cc->getTypeColor(), temp.getTypeColor()};
+				switchCells(cts);
+				printf("ça marche");
+			}
+		}
+	}
+
+	toSwap.clear();
 }
 
 
@@ -570,7 +588,7 @@ void Canvas::checkNeighbors(){
   cout<< "--------------Start Checking----------"<< endl << endl;
 	checkNeighborsX();
 	checkNeighborsY();
-  setNulls();
+  	setNulls();
   cout<< "-------------- Check done -------------"<< endl << endl;
 }
 
@@ -626,6 +644,7 @@ void Canvas::pouf(Recurrence recurrence){
 			for(int i = count.start.x; i <= count.finish.x; i++){
 				for(int j = count.start.y; j <= count.finish.y; j++){
 					cells[i][j].getRect().getImageBox()->image(png_blank);
+					toSwap.push_back(&cells[i][j]);
 				}
 			}
 		}
