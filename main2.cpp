@@ -356,12 +356,12 @@ class Canvas {
 	void keyPressed(int keyCode);
 	void updateNeighbors();
 	void checkNeighbors();
-	void checkNeighborsX();
-	void checkNeighborsY();
+	vector<Point> checkNeighborsX();
+	vector<Point> checkNeighborsY();
 	void printCells();
 
-	void poufTest(TemporaryCell temp);
-	void poufTest2(TemporaryCell temp);
+	vector<Point> poufTest(TemporaryCell temp);
+	vector<Point> poufTest2(TemporaryCell temp);
 };
 
 Canvas::Canvas() {
@@ -505,11 +505,27 @@ void Canvas::updateNeighbors(){
 }
 
 void Canvas::checkNeighbors(){
-	checkNeighborsY();
-	checkNeighborsX();
+	vector<Point> res;
+	vector<Point> res_1 = checkNeighborsY();
+	vector<Point> res_2 = checkNeighborsX();
+
+	for(auto &p : res_1){
+		res.push_back(p);
+	}
+
+	for(auto &p : res_2){
+		res.push_back(p);
+	}
+
+	for(auto &p : res){
+		Cell &c = cells[p.x][p.y];
+		c.setTypeColor(0);
+	}
 }
 
-void Canvas::checkNeighborsX(){
+vector<Point> Canvas::checkNeighborsX(){
+
+	vector<Point> res;
 
 	for(int x = 0; x < 9; x++){
 		int counter = 1;
@@ -557,13 +573,21 @@ void Canvas::checkNeighborsX(){
 		for(auto &vec : recurrence){
 			if(vec.count >= 3){
 				cout << "TypeColor - " << vec.coord.x << " - Nombre de rec - " << vec.coord.y << endl;
-				poufTest(vec);
+				vector<Point> res_ = poufTest(vec);
+				if(res_.size() > 0){
+					for(auto &p : res_){
+						res.push_back(p);
+					}
+				}
 			}
 		}
 	}
+	return res;
 }
 
-void Canvas::checkNeighborsY(){
+vector<Point> Canvas::checkNeighborsY(){
+
+	vector<Point> res;
 
 	for(int x = 0; x < 9; x++){
 		int counter = 1;
@@ -609,13 +633,21 @@ void Canvas::checkNeighborsY(){
 		}
 		for(auto &vec : recurrence){
 			if(vec.count >= 3){
-				poufTest2(vec);
+				vector<Point> res_ = poufTest2(vec);
+				if(res_.size() > 0){
+					for(auto &p : res_){
+						res.push_back(p);
+					}
+				}
 			}
 		}
 	}
+
+	return res;
 }
 
-void Canvas::poufTest(TemporaryCell temp){
+vector<Point> Canvas::poufTest(TemporaryCell temp){
+	vector<Point> res;
 	Point base = {temp.coord.x, temp.coord.y};
 	Point indice_base = {0, 0};
 
@@ -635,14 +667,17 @@ void Canvas::poufTest(TemporaryCell temp){
 
 	}
 	for(int i = 1; i <= temp.count; i++){
+		res.push_back({indice_base.x, indice_base.y + i});
 		Cell &c = cells[indice_base.x][indice_base.y + i];
 		//c.getRect().setCenter({0, 0});
 		c.getRect().getImageBox()->image(nullptr);
-		c.setTypeColor(0);
 	}
+
+	return res;
 }
 
-void Canvas::poufTest2(TemporaryCell temp){
+vector<Point> Canvas::poufTest2(TemporaryCell temp){
+	vector<Point> res;
 	Point base = {temp.coord.x, temp.coord.y};
 	Point indice_base = {0, 0};
 
@@ -662,11 +697,13 @@ void Canvas::poufTest2(TemporaryCell temp){
 
 	}
 	for(int i = 1; i <= temp.count; i++){
+		res.push_back({indice_base.x + i, indice_base.y});
 		Cell &c = cells[indice_base.x + i][indice_base.y];
 		//c.getRect().setCenter({0, 0});
 		c.getRect().getImageBox()->image(nullptr);
-		c.setTypeColor(0);
 	}
+
+	return res;
 }
 
 void Canvas::printCells(){

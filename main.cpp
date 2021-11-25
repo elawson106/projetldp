@@ -6,6 +6,13 @@ MIGUEL LOZANO
 
 */
 
+/*
+ TODO definir tous les bonbons une fois dans canvas, faire passer leur adresse dans cell -> rectangle (vercteur<b_rouge, b_vert, etc)
+ comme ça on les initialise une seule fois et on ne fait pas trop de new + peut etre faire le switchcase initial de couleur dans canvas
+ et juste travailler avec set_imgbox
+ rajouter par niveau une ligne contenant tous les bonbons speciaux qui peuvent y apparaitre pour les initialiser aussi
+ a la fin du niveau for dans la liste des pointeurs et delete tous (pour contrer le new)
+*/
 
 // These should include everything you might use
 #include <FL/Fl.H>
@@ -37,8 +44,6 @@ struct recurCount
   int color, amount;
   Point start, finish;
 };
-
-
 
 struct ImageBonbon{
 	Fl_Box* box;
@@ -342,6 +347,17 @@ void Cell::mouseClick(Point mouseLoc) {
     }
 }
 
+/*--------------------------------------------------
+
+Canvas Recurrence
+
+Classe comportant un vecteur de compteur, compteur qui contient:
+int color : la couleur qui se répète
+int amount : la taille de la chaine
+Point start : Point contenant les coords de debut de la chaine
+Point finish : Point contenant les coords de fin de la chaine
+
+--------------------------------------------------*/
 class Recurrence {
     // vecteur de compteurs de chaines(recurCount)
     vector<recurCount> recu;
@@ -371,8 +387,6 @@ bool Recurrence::isPouf(){
     bool pouf = false;
     for(auto &elem : recu){
 			if(elem.amount >= 3){
-				cout << "Allignement de " << elem.amount << " bonbons de couleur " << elem.color << endl;
-        cout << "de la ligne " << elem.start.x << " à " << elem.finish.x << " et de la colonne "<< elem.start.y << " à " << elem.finish.y << endl ;
         pouf = True;
 			}
     }
@@ -574,11 +588,9 @@ void Canvas::updateNeighbors(){
 }
 
 void Canvas::checkNeighbors(){
-  cout<< "--------------Start Checking----------"<< endl << endl;
 	checkNeighborsX();
 	checkNeighborsY();
   setNulls(cells);
-  cout<< "-------------- Check done -------------"<< endl << endl;
 }
 
 void Canvas::checkNeighborsX(){
@@ -599,7 +611,7 @@ void Canvas::checkNeighborsX(){
 		}
 		if (recurrence.isPouf()){
       pouf(recurrence, cells);
-      cout<<"        Pouf sur horrizontal"<<endl<<endl;}
+    }
 	}
 }
 
@@ -621,10 +633,9 @@ void Canvas::checkNeighborsY(){
       }
       if (recurrence.isPouf()){
         pouf(recurrence, cells);
-        cout<<"        Pouf sur vertical"<<endl<<endl;}
-        
-    }
+      }
   }
+}
 
 void Canvas::pouf(Recurrence recurrence, vector< vector<Cell> > &cells){
     //mets les images de toutes les cells en caine de min 3 a blank (implémenter explosion)
