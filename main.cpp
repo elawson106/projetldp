@@ -381,7 +381,6 @@ void Rectangle::init(){
 }
 
 void Rectangle::draw() {    
-    //fl_draw_box(FL_FLAT_BOX, center.x-w/2, center.y-h/2, w, h, fillColor);
     fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
     Text(to_string(id), {center.x + 30, center.y + 30}).draw();
 	  img_box->redraw();
@@ -523,6 +522,7 @@ elsewhere it will probably crash.
 class Canvas {
   vector< vector<Cell> > cells;
   vector<Point> toSwap;
+  ifstream file;
   int score;
   int highscore;
   Img_vector images;
@@ -543,40 +543,37 @@ class Canvas {
   bool setNulls();
   void swapUP();
   void addscore(int longeur);
+  void updatehigh();
   void printCells();
 };
 
 Canvas::Canvas() {
   string niveau;
-	ifstream file;
   int b_type, id, elem;
-	file.open("niveaux/1.txt");
+	file.open("niveaux/n1/1.txt");
   score = 0;
 
 	for (int x = 0; x<9; x++) {
 		cells.push_back({});
 	}
-	for (int x = 0; x<10; x++){
-        getline(file, niveau);
-        if (x  == 9)
-        {
-          highscore = stoi(niveau);
-        }
-        else
-        {
-          elem = 0;
-          for (int y = 0; y<9; y++){
-            b_type = niveau[elem] - '0';
-            images.add(b_type);
-            id = y + ((x * 9));
-			      cells[x].push_back({{100*y+50, 100*x+150}, 100, 100,images.getImginf(b_type),id, x, y});
-			      elem++;
-        }
-        
-       
-		}
+	for (int x = 0; x<9; x++){
+      getline(file, niveau);
+      elem = 0;
+      for (int y = 0; y<9; y++){
+        b_type = niveau[elem] - '0';
+        images.add(b_type);
+        id = y + ((x * 9));
+        cells[x].push_back({{100*y+50, 100*x+150}, 100, 100,images.getImginf(b_type),id, x, y});
+        elem++;
+     }
 	}
-    updateNeighbors();
+  file.close();
+  file.open("niveaux/N1/h1.txt");
+  string high;
+  getline(file, high);
+  highscore = stoi(high);
+  file.close();
+  updateNeighbors();
 }
 
 
@@ -694,14 +691,10 @@ bool Canvas::setNulls(){
     
 void Canvas::swapUP(){
     // decale la chaine de cells qui vient de pop (toSwap) vers le haut du tableau
-    int maxSwap = 0;
     for(auto point : toSwap){
       int counter = 1;
-      if (maxSwap == 0){
-        maxSwap = point.x;
-      }
       if(point.x > 0){
-        while ( maxSwap - counter >= 0 && cells[point.x-counter][point.y].getX() >= 0) 
+        while (point.x - counter >= 0 && cells[point.x-counter][point.y].getX() >= 0) 
         {
           CTS cts = {cells[point.x-counter+1][point.y].getRect().getCenter(), cells[point.x-counter][point.y].getRect().getCenter(),
                 cells[point.x-counter+1][point.y].getRect().getImageBonbon(), cells[point.x-counter][point.y].getRect().getImageBonbon(),
@@ -812,6 +805,17 @@ void Canvas::pouf(Recurrence recurrence){
 
 void Canvas::addscore(int longeur){
     score = score + (100 * longeur);
+    if (score > highscore)
+    {
+      highscore = score;  
+      file.open("niveaux/n1/h1.txt");
+      ofstream temp("niveaux/n1/h1.txt");
+      temp << highscore;
+      temp.rdbuf();
+      temp.close();
+      file.close();
+    }
+    
 }
 
 void Canvas::printCells(){
