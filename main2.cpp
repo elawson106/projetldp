@@ -669,10 +669,8 @@ bool Canvas::setNulls(){
         for (auto &c: v){
           if (c.getRect().getImageBox()->image() == images.blank())
           {
-            //c.setTypeColor(0);
             int randColor = (rand() % 6) + 1;
             c.setTypeColor(randColor);
-            //c.getRect().getImageBonbon().png = ;
             c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg);
             poufed = True;
           }
