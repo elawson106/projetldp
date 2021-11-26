@@ -545,6 +545,7 @@ class Canvas {
   void addscore(int longeur);
   void updatehigh();
   void printCells();
+  void setrandcolor();
 };
 
 Canvas::Canvas() {
@@ -568,7 +569,7 @@ Canvas::Canvas() {
      }
 	}
   file.close();
-  file.open("niveaux/N1/h1.txt");
+  file.open("niveaux/n1/h1.txt");
   string high;
   getline(file, high);
   highscore = stoi(high);
@@ -672,6 +673,17 @@ void Canvas::checkClicks(){
         resetClicks();
     }    
 }
+void Canvas::setrandcolor(){
+  for(auto &v : cells)
+    for (auto &c : v){
+      if (c.getTypeColor() == 0){
+        int randColor = (rand() % 6) + 1;
+        c.setTypeColor(randColor);
+        c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg); 
+      }
+    }
+}
+
 
 bool Canvas::setNulls(){
     // mets a zero la color de toutes les cells pointant vers blank (celles qui viennent d'exploser)
@@ -680,10 +692,9 @@ bool Canvas::setNulls(){
         for (auto &c: v){
           if (c.getRect().getImageBox()->image() == images.blank())
           {
-            int randColor = (rand() % 6) + 1;
-            c.setTypeColor(randColor);
-            c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg);
-            poufed = True;
+            c.setTypeColor(0); 
+            printf("gfd");
+            poufed = true;
           }
         }
     return poufed;
@@ -694,18 +705,19 @@ void Canvas::swapUP(){
     for(auto point : toSwap){
       int counter = 1;
       if(point.x > 0){
-        while (point.x - counter >= 0 && cells[point.x-counter][point.y].getX() >= 0) 
+        while ((point.x-counter) >= 0 && cells[point.x-counter][point.y].getX() >= 0 && cells[point.x-counter][point.y].getTypeColor() != 0) 
         {
-          CTS cts = {cells[point.x-counter+1][point.y].getRect().getCenter(), cells[point.x-counter][point.y].getRect().getCenter(),
-                cells[point.x-counter+1][point.y].getRect().getImageBonbon(), cells[point.x-counter][point.y].getRect().getImageBonbon(),
-                cells[point.x-counter+1][point.y].getCoord(), cells[point.x-counter][point.y].getCoord(),
-                cells[point.x-counter+1][point.y].getTypeColor(), cells[point.x-counter][point.y].getTypeColor()};
+          CTS cts = {cells[point.x-counter][point.y].getRect().getCenter(), cells[point.x-counter+1][point.y].getRect().getCenter(),
+                cells[point.x-counter][point.y].getRect().getImageBonbon(), cells[point.x-counter+1][point.y].getRect().getImageBonbon(),
+                cells[point.x-counter][point.y].getCoord(), cells[point.x-counter+1][point.y].getCoord(),
+                cells[point.x-counter][point.y].getTypeColor(), cells[point.x-counter+1][point.y].getTypeColor()};
           switchCells(cts);
           counter++;
         }
       }
     }
     toSwap.clear();
+    setrandcolor();
 	  checkNeighbors();
     printCells();
 }
