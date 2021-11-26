@@ -523,6 +523,7 @@ elsewhere it will probably crash.
 class Canvas {
   vector< vector<Cell> > cells;
   vector<Point> toSwap;
+  int score;
   Img_vector images;
  public:
   Canvas();
@@ -540,7 +541,7 @@ class Canvas {
   void pouf(Recurrence recurrence);
   bool setNulls();
   void swapUP();
-  void decalageG();
+  void addscore(int longeur);
   void printCells();
 };
 
@@ -549,6 +550,7 @@ Canvas::Canvas() {
 	ifstream file;
   int b_type, id, elem;
 	file.open("niveaux/1.txt");
+  score = 0;
 
 	for (int x = 0; x<9; x++) {
 		cells.push_back({});
@@ -570,6 +572,7 @@ Canvas::Canvas() {
 
 
 void Canvas::draw() {
+  Text(to_string(score), {850, 50}, 20).draw();
   for (auto &v: cells)
     for (auto &c: v)
       c.draw();
@@ -791,6 +794,11 @@ void Canvas::pouf(Recurrence recurrence){
         }
       }
     }
+    addscore(toSwap.size());
+}
+
+void Canvas::addscore(int longeur){
+    score = score + (100 * longeur);
 }
 
 void Canvas::printCells(){
