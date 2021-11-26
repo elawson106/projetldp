@@ -524,6 +524,7 @@ class Canvas {
   vector< vector<Cell> > cells;
   vector<Point> toSwap;
   int score;
+  int highscore;
   Img_vector images;
  public:
   Canvas();
@@ -555,15 +556,24 @@ Canvas::Canvas() {
 	for (int x = 0; x<9; x++) {
 		cells.push_back({});
 	}
-	for (int x = 0; x<9; x++){
+	for (int x = 0; x<10; x++){
         getline(file, niveau);
-        elem = 0;
-		for (int y = 0; y<9; y++){
-			b_type = niveau[elem] - '0';
-      images.add(b_type);
-      id = y + ((x * 9));
-			cells[x].push_back({{100*y+50, 100*x+150}, 100, 100,images.getImginf(b_type),id, x, y});
-			elem++;
+        if (x  == 9)
+        {
+          highscore = stoi(niveau);
+        }
+        else
+        {
+          elem = 0;
+          for (int y = 0; y<9; y++){
+            b_type = niveau[elem] - '0';
+            images.add(b_type);
+            id = y + ((x * 9));
+			      cells[x].push_back({{100*y+50, 100*x+150}, 100, 100,images.getImginf(b_type),id, x, y});
+			      elem++;
+        }
+        
+       
 		}
 	}
     updateNeighbors();
@@ -572,6 +582,7 @@ Canvas::Canvas() {
 
 
 void Canvas::draw() {
+  Text(to_string(highscore), {750, 50}, 20).draw();
   Text(to_string(score), {850, 50}, 20).draw();
   for (auto &v: cells)
     for (auto &c: v)
@@ -672,10 +683,8 @@ bool Canvas::setNulls(){
         for (auto &c: v){
           if (c.getRect().getImageBox()->image() == images.blank())
           {
-            //c.setTypeColor(0);
             int randColor = (rand() % 6) + 1;
             c.setTypeColor(randColor);
-            //c.getRect().getImageBonbon().png = ;
             c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg);
             poufed = True;
           }
@@ -685,15 +694,19 @@ bool Canvas::setNulls(){
     
 void Canvas::swapUP(){
     // decale la chaine de cells qui vient de pop (toSwap) vers le haut du tableau
+    int maxSwap = 0;
     for(auto point : toSwap){
       int counter = 1;
+      if (maxSwap == 0){
+        maxSwap = point.x;
+      }
       if(point.x > 0){
-        while ((point.x-counter) >= 0 && cells[point.x-counter][point.y].getX() >= 0 && cells[point.x-counter][point.y].getTypeColor() != 0)
+        while ( maxSwap - counter >= 0 && cells[point.x-counter][point.y].getX() >= 0) 
         {
-          CTS cts = {cells[point.x-counter][point.y].getRect().getCenter(), cells[point.x-counter+1][point.y].getRect().getCenter(),
-                cells[point.x-counter][point.y].getRect().getImageBonbon(), cells[point.x-counter+1][point.y].getRect().getImageBonbon(),
-                cells[point.x-counter][point.y].getCoord(), cells[point.x-counter+1][point.y].getCoord(),
-                cells[point.x-counter][point.y].getTypeColor(), cells[point.x-counter+1][point.y].getTypeColor()};
+          CTS cts = {cells[point.x-counter+1][point.y].getRect().getCenter(), cells[point.x-counter][point.y].getRect().getCenter(),
+                cells[point.x-counter+1][point.y].getRect().getImageBonbon(), cells[point.x-counter][point.y].getRect().getImageBonbon(),
+                cells[point.x-counter+1][point.y].getCoord(), cells[point.x-counter][point.y].getCoord(),
+                cells[point.x-counter+1][point.y].getTypeColor(), cells[point.x-counter][point.y].getTypeColor()};
           switchCells(cts);
           counter++;
         }
