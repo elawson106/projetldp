@@ -2,7 +2,7 @@
 
 Projet LDP2 CANDY CRUSH
 EDEM LAWSON 000499852
-MIGUEL LOZANO 
+MIGUEL LOZANO POZO 000495649
 
 */
 
@@ -677,7 +677,7 @@ void Canvas::setrandcolor(){
   for(auto &v : cells)
     for (auto &c : v){
       if (c.getTypeColor() == 0){
-        int randColor = (rand() % 6) + 1;
+        int randColor = ((rand() % 6) + 1);
         c.setTypeColor(randColor);
         c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg); 
       }
@@ -693,7 +693,6 @@ bool Canvas::setNulls(){
           if (c.getRect().getImageBox()->image() == images.blank())
           {
             c.setTypeColor(0); 
-            printf("gfd");
             poufed = true;
           }
         }
