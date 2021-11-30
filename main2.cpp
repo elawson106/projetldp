@@ -727,7 +727,7 @@ void Canvas::draw() {
                 }
             }
 		}
-		if (switched)
+		if (switched && !inAnim)
     	{
 			inAnim = True;
 			temp_anim = True;
