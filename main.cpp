@@ -2,7 +2,7 @@
 
 Projet LDP2 CANDY CRUSH
 EDEM LAWSON 000499852
-MIGUEL LOZANO POZO 000495649
+MIGUEL LOZANO 
 
 */
 
@@ -196,7 +196,7 @@ class Img_vector {
 
 void Img_vector::init(){
   //initialise le vecteur avec Blank comme premier element
-  Fl_PNG_Image* png_blank = new Fl_PNG_Image("bonbon/blank.png");
+  Fl_PNG_Image* png_blank = new Fl_PNG_Image("Images/bonbon/blank.png");
   images.push_back({0, png_blank});
 }
 
@@ -214,77 +214,77 @@ void Img_vector::add(int color) {
       {
       case 1:
       //basiques
-        png_img = new Fl_PNG_Image("bonbon/tile000.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile000.png");
         images.push_back({1, png_img});
         break;
       case 2:
-        png_img = new Fl_PNG_Image("bonbon/tile001.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile001.png");
         images.push_back({2, png_img});
         break;
       case 3:
-        png_img = new Fl_PNG_Image("bonbon/tile002.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile002.png");
         images.push_back({3, png_img});
         break;
       case 4:
-        png_img = new Fl_PNG_Image("bonbon/tile003.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile003.png");
         images.push_back({4, png_img});
         break;
       case 5:
-        png_img = new Fl_PNG_Image("bonbon/tile004.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile004.png");
         images.push_back({5, png_img});
         break;
       case 6:
-        png_img = new Fl_PNG_Image("bonbon/tile005.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile005.png");
         images.push_back({6, png_img});
         break;
       //sweepers
       case 7:
-        png_img = new Fl_PNG_Image("bonbon/tile014.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile014.png");
         images.push_back({7, png_img});
         break;
       case 8:
-        png_img = new Fl_PNG_Image("bonbon/tile015.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile015.png");
         images.push_back({8, png_img});
         break;
       case 9:
-        png_img = new Fl_PNG_Image("bonbon/tile016.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile016.png");
         images.push_back({9, png_img});
         break;
       case 10:
-        png_img = new Fl_PNG_Image("bonbon/tile017.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile017.png");
         images.push_back({10, png_img});
         break;
       case 11:
-        png_img = new Fl_PNG_Image("bonbon/tile018.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile018.png");
         images.push_back({11, png_img});
         break;
       case 12:
-        png_img = new Fl_PNG_Image("bonbon/tile019.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile019.png");
         images.push_back({12, png_img});
         break;
       //bombes
       case 13:
-        png_img = new Fl_PNG_Image("bonbon/tile028.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile028.png");
         images.push_back({13, png_img});
         break;
       case 14:
-        png_img = new Fl_PNG_Image("bonbon/tile029.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile029.png");
         images.push_back({14, png_img});
         break;
       case 15:
-        png_img = new Fl_PNG_Image("bonbon/tile030.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile030.png");
         images.push_back({15, png_img});
         break;
       case 16:
-        png_img = new Fl_PNG_Image("bonbon/tile031.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile031.png");
         images.push_back({16, png_img});
         break;
       case 17:
-        png_img = new Fl_PNG_Image("bonbon/tile032.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile032.png");
         images.push_back({17, png_img});
         break;
       case 18:
-        png_img = new Fl_PNG_Image("bonbon/tile033.png");
+        png_img = new Fl_PNG_Image("Images/bonbon/tile033.png");
         images.push_back({18, png_img});
         break;
               
@@ -522,12 +522,15 @@ elsewhere it will probably crash.
 class Canvas {
   vector< vector<Cell> > cells;
   vector<Point> toSwap;
+  ImageBonbon background;
+  ImageBonbon bestScore;
   ifstream file;
-  int score;
+  int score = 0;
   int highscore;
   Img_vector images;
  public:
   Canvas();
+  void initBG();
   void draw();
   void resetClicks();
   void checkClicks();
@@ -548,12 +551,12 @@ class Canvas {
   void setrandcolor();
 };
 
+
 Canvas::Canvas() {
+  initBG();
   string niveau;
   int b_type, id, elem;
 	file.open("niveaux/n1/1.txt");
-  score = 0;
-
 	for (int x = 0; x<9; x++) {
 		cells.push_back({});
 	}
@@ -577,11 +580,19 @@ Canvas::Canvas() {
   updateNeighbors();
 }
 
+void Canvas::initBG(){
+  background.box = new Fl_Box(0, 0, 900, 1000);
+	background.png = new Fl_PNG_Image("Images/Misc/background.png");
+	background.box->image(background.png);
 
+	bestScore.box = new Fl_Box(600, 25, 200, 50);
+	bestScore.png = new Fl_PNG_Image("Images/Misc/highscore.png");
+	bestScore.box->image(bestScore.png);
+}
 
 void Canvas::draw() {
-  Text(to_string(highscore), {750, 50}, 20).draw();
-  Text(to_string(score), {850, 50}, 20).draw();
+  Text(to_string(highscore), {850, 50}, 20).draw();
+  Text(to_string(score), {100, 50}, 20).draw();
   for (auto &v: cells)
     for (auto &c: v)
       c.draw();
@@ -677,7 +688,7 @@ void Canvas::setrandcolor(){
   for(auto &v : cells)
     for (auto &c : v){
       if (c.getTypeColor() == 0){
-        int randColor = ((rand() % 6) + 1);
+        int randColor = (rand() % 6) + 1;
         c.setTypeColor(randColor);
         c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg); 
       }
