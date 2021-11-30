@@ -489,6 +489,7 @@ class Animation {
 		const int bounceHeight = 200;
 		int counter = 0;
 		int other = 0;
+		int max = 100;
 		Cell *base;
 		Cell *base2;
     Point coord_base;
@@ -539,7 +540,7 @@ Point Animation::currentTranslation(){
 }
 
 bool Animation::isComplete(){
-	return time > 99;
+	return time > max;
 }
 
 Cell::Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int colonne):
@@ -824,7 +825,12 @@ void Canvas::setrandcolor(){
     for (auto &c : v){
       if (c.getTypeColor() == 0){
         int randColor = (rand() % 6) + 1;
+		c.getRect().getImageBonbon().box->position(c.getRect().getImageBonbon().box->x(), c.getRect().getImageBonbon().box->y() - 100);
+		c.getRect().setCenter({c.getRect().getCenter().x, c.getRect().getCenter().y - 100});
         c.setTypeColor(randColor);
+		Cell c_ = {{c.getRect().getCenter().x, c.getRect().getCenter().y + 100}, 100, 100, images.getImginf(1), c.getId(), c.getX(), c.getY()};
+		Animation *a = new Animation(&c, &c_, static_cast<Animation::AnimationType>(0));
+		c.setAnimation(a);
         c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg); 
       }
     }
