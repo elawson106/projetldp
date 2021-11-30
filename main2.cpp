@@ -465,6 +465,8 @@ class Cell {
 
   Rectangle &getRect(){return r;}
 
+  Animation *getAnim(){ return anim;}
+
   // Methods that draw and handle events
   void draw();
   void drawWithoutAnimation();
@@ -503,8 +505,7 @@ class Animation {
 };
 
 void Animation::draw(){
-	++time;
-	//Translation t3{currentTranslation()};
+	time = time + 2;
 	base->drawWithoutAnimation();
 	base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
 	base->getRect().setCenter({currentTranslation().x + 50, currentTranslation().y + 50});
@@ -574,7 +575,9 @@ void Cell::mouseMove(Point mouseLoc) {
 
 
 void Cell::mouseClick(Point mouseLoc) {
-    if (r.contains(mouseLoc)){
+	if (!anim)
+	{
+		if (r.contains(mouseLoc)){
         if (isClicked())
         {
             setclicked(False);
@@ -584,6 +587,9 @@ void Cell::mouseClick(Point mouseLoc) {
             setclicked(True);
         }
     }
+	}
+	
+    
 }
 
 void Cell::setAnimation(Animation *a){
@@ -738,6 +744,10 @@ void Canvas::switchCells(CTS cts){
           cells[cts.coord_2.x][cts.coord_2.y].setAnimation(a);
           Animation *aa = new Animation(&cells[cts.coord_2.x][cts.coord_2.y], &cells[cts.coord_1.x][cts.coord_1.y], static_cast<Animation::AnimationType>(0));
 		  cells[cts.coord_1.x][cts.coord_1.y].setAnimation(aa);
+		  while (cells[cts.coord_1.x][cts.coord_1.y].getAnim() || cells[cts.coord_2.x][cts.coord_2.y].getAnim())
+		  {
+		     // Attends que l'animation se finisse
+		  }
 		  
           //Cell 1
 		
