@@ -491,6 +491,8 @@ class Animation {
 		int other = 0;
 		Cell *base;
 		Cell *base2;
+		Color_Image blank;
+		Point currentSize;
     Point coord_base;
     Point coord_base2;
 
@@ -503,46 +505,81 @@ class Animation {
       coord_base = base->getRect().getCenter();
       coord_base2 = base2->getRect().getCenter();
     }
+	Animation(Cell* cellToAnimate, Color_Image blank,  AnimationType animationType):
+	base{cellToAnimate},blank{blank}, animationType{animationType}{
+		coord_base = base->getRect().getCenter();
+		currentSize = {base->getRect().getImageBox()->w(), base->getRect().getImageBox()->h()};
+	}
 	void draw();
 	bool isComplete();
 
 };
 
 void Animation::draw(){
-		time = time + 8;
-		base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
-		base->getRect().setCenter({currentTranslation().x + 50, currentTranslation().y + 50});
-		base->drawWithoutAnimation();
-	//base->drawWithoutAnimation();
+		time = time + 3;
+		if (animationType == swap)
+		{
+			base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
+			base->getRect().setCenter({currentTranslation().x + 50, currentTranslation().y + 50});
+			base->drawWithoutAnimation();
+		}
+		else if (animationType == explode)
+		{
+			cout << "yop";
+			//base->getRect().getImageBox()->resize(coord_base.x - 50, coord_base.y - 50 , currentTranslation().x, currentTranslation().y);
+			base->getRect().getImageBox()->image(base->getRect().getImageBox()->image()->copy(currentTranslation().x, currentTranslation().y));
+			base->drawWithoutAnimation();
+		}
 }
 
 Point Animation::currentTranslation(){
-	int b_x = coord_base.x;
-	int b_y = coord_base.y;
-	int b2_x = coord_base2.x;
-	int b2_y = coord_base2.y;
-	int dif_x = b_x - b2_x;
-	int dif_y = b_y - b2_y;
+	if (animationType == swap)
+	{
+		int b_x = coord_base.x;
+		int b_y = coord_base.y;
+		int b2_x = coord_base2.x;
+		int b2_y = coord_base2.y;
+		int dif_x = b_x - b2_x;
+		int dif_y = b_y - b2_y;
 
-	if(dif_y > 0){   // b est en dessous de b2
-		return {b_x - 50, b_y -50 - time};
-	}else if(dif_y < 0){     // b est au dessu de b2
-		return {b_x - 50, b_y -50  + time};
-	}
+		if(dif_y > 0){   // b est en dessous de b2
+			return {b_x - 50, b_y -50 - time};
+		}else if(dif_y < 0){     // b est au dessu de b2
+			return {b_x - 50, b_y -50  + time};
+		}
 
-	else if(dif_x > 0){   // b est a droite de b2
-		return {b_x -50 - time, b_y - 50};
-	}else if(dif_x < 0){    //b est a gauche de b2
-		return {b_x -50 + time, b_y - 50};
+		else if(dif_x > 0){   // b est a droite de b2
+			return {b_x -50 - time, b_y - 50};
+		}else if(dif_x < 0){    //b est a gauche de b2
+			return {b_x -50 + time, b_y - 50};
+		}
 	}
+	else if (animationType == explode)
+	{
+		return {currentSize.x - time,currentSize.y - time};
+	}
+	
+	
+	
 }
 
 bool Animation::isComplete(){
-		if (time > 100)
+		if (time > 99)
 	{
-		base->getRect().getImageBox()->position(coord_base2.x - 50, coord_base2.y - 50);
-		base->getRect().setCenter({coord_base2.x, coord_base2.y});
-		return True;
+		if (animationType == swap)
+		{
+			base->getRect().getImageBox()->position(coord_base2.x - 50, coord_base2.y - 50);
+			base->getRect().setCenter({coord_base2.x, coord_base2.y});
+			return True;
+		}
+		else if (animationType == explode)
+		{
+			
+			base->getRect().getImageBox()->image(blank.locImg);
+			return True;
+		}
+		
+		
 	}
 	
 	return False;
@@ -656,7 +693,7 @@ class Canvas {
   void checkNeighborsX();
   void checkNeighborsY();
   void pouf(Recurrence recurrence);
-  void setNulls();
+  bool setNulls();
   void swapUP();
   void addscore(int longeur);
   void updatehigh();
@@ -825,7 +862,8 @@ void Canvas::checkClicks(){
     }    
 }
 void Canvas::setrandcolor(){
-  for(auto &v : cells)
+	if(!inAnim && toSwap.size() == 0){
+		for(auto &v : cells)
     for (auto &c : v){
       if (c.getTypeColor() == 0){
         int randColor = (rand() % 6) + 1;
@@ -833,21 +871,23 @@ void Canvas::setrandcolor(){
         c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg); 
       }
     }
+	}
 }
 
 
-void Canvas::setNulls(){
+bool Canvas::setNulls(){
     // mets a zero la color de toutes les cells pointant vers blank (celles qui viennent d'exploser)
-    //bool poufed = false;
+	bool poufed = false;
     for (auto &v: cells)
         for (auto &c: v){
           if (c.getRect().getImageBox()->image() == images.blank())
           {
             c.setTypeColor(0); 
-            //poufed = true;
+            printf("gfd");
+            poufed = true;
           }
         }
-    //return poufed;
+    return poufed;
 }
     
 void Canvas::swapUP(){
@@ -861,6 +901,7 @@ void Canvas::swapUP(){
                 cells[point.x-counter+1][point.y].getRect().getImageBonbon(), cells[point.x-counter][point.y].getRect().getImageBonbon(),
                 cells[point.x-counter+1][point.y].getCoord(), cells[point.x-counter][point.y].getCoord(),
                 cells[point.x-counter+1][point.y].getTypeColor(), cells[point.x-counter][point.y].getTypeColor()};
+				inAnim = True;
           switchCells(cts);
           //CTS.1 vide CTS.2 Celle au dessus de la vide
           counter++;
@@ -868,12 +909,8 @@ void Canvas::swapUP(){
       }
     }
     toSwap.clear();
-	checkNeighborsX();
-	checkNeighborsY();
-	if (toSwap.size() > 0 )
-	{
-		swapUP();
-	}
+	setrandcolor();
+	checkNeighbors();
     printCells();
 }
 
@@ -902,8 +939,10 @@ void Canvas::checkNeighbors(){
 	if(!inAnim){
 		checkNeighborsX();
 		checkNeighborsY();
-		setNulls();
-		swapUP();
+		if (setNulls())
+		{
+			swapUP();
+		}
 	}
 }
 
@@ -961,7 +1000,10 @@ void Canvas::pouf(Recurrence recurrence){
       if(count.amount >= 3){
         for(int i = count.start.x; i <= count.finish.x; i++){
           for(int j = count.start.y; j <= count.finish.y; j++){
-            cells[i][j].getRect().getImageBox()->image(images.blank());
+            //cells[i][j].getRect().getImageBox()->image(images.blank());
+			inAnim = True;
+			Animation *a = new Animation(&cells[i][j], images.getImginf(0), static_cast<Animation::AnimationType>(1));
+			cells[i][j].setAnimation(a);
             toSwap.push_back({i, j});
           }
         }
@@ -1044,7 +1086,7 @@ class MainWindow : public Fl_Window {
   static void Timer_CB(void *userdata) {
     MainWindow *o = (MainWindow*) userdata;
     o->redraw();
-    Fl::repeat_timeout(1.0/20, Timer_CB, userdata);
+    Fl::repeat_timeout(1.0/60, Timer_CB, userdata);
   }
 };
 
