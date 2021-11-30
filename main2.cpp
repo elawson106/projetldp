@@ -510,11 +510,12 @@ class Animation {
 };
 
 void Animation::draw(){
-		time++;
-		time++;
-		base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
-		base->getRect().setCenter({currentTranslation().x + 50, currentTranslation().y + 50});
-		base->drawWithoutAnimation();
+	time++;
+	time++;
+	time++;
+	base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
+	base->getRect().setCenter({currentTranslation().x + 50, currentTranslation().y + 50});
+	base->drawWithoutAnimation();
 	//base->drawWithoutAnimation();
 }
 
@@ -1046,7 +1047,7 @@ class MainWindow : public Fl_Window {
   static void Timer_CB(void *userdata) {
     MainWindow *o = (MainWindow*) userdata;
     o->redraw();
-    Fl::repeat_timeout(1.0/20, Timer_CB, userdata);
+    Fl::repeat_timeout(1.0/60, Timer_CB, userdata);
   }
 };
 
