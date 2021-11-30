@@ -503,6 +503,10 @@ class Animation {
 		base{cellToAnimate}, base2{cellAutre}, animationType{animationType} {
       coord_base = base->getRect().getCenter();
       coord_base2 = base2->getRect().getCenter();
+	  if(coord_base2.y - 50 < 100){
+			coord_base2.y = 150;
+			cout << "IIIIIIIIII" << endl;
+		}
     }
 	void draw();
 	bool isComplete();
@@ -541,7 +545,12 @@ Point Animation::currentTranslation(){
 }
 
 bool Animation::isComplete(){
-	return time > max;
+	if(time > max){
+		base->getRect().getImageBox()->position(coord_base2.x - 50, coord_base2.y - 50);
+		base->getRect().setCenter({coord_base2.x, coord_base2.y});
+		return True;
+	}
+	return False;
 }
 
 Cell::Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int colonne):
@@ -739,11 +748,13 @@ void Canvas::draw() {
     	}
       c.draw();
 	}
-	cout << "TEMP ANIM - " << temp_anim << endl;
+	//cout << "TEMP ANIM - " << temp_anim << endl;
 	if(!temp_anim){
 		inAnim = False;
 	}
-	checkNeighbors();
+	if(!inAnim){
+		checkNeighbors();
+	}
 	checkClicks();
 }
 
@@ -874,7 +885,7 @@ void Canvas::swapUP(){
     }
     toSwap.clear();
 	setrandcolor();
-	checkNeighbors();
+	//checkNeighbors();
     printCells();
 }
 
