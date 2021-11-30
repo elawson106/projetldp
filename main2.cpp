@@ -507,6 +507,7 @@ void Animation::draw(){
 	//Translation t3{currentTranslation()};
 	base->drawWithoutAnimation();
 	base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
+	base->getRect().setCenter({currentTranslation().x + 50, currentTranslation().y + 50});
 }
 
 Point Animation::currentTranslation(){
@@ -728,8 +729,8 @@ void Canvas::mouseClick(Point mouseLoc) {
 
 void Canvas::switchCells(CTS cts){
           
-          cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
-          cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
+          //cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
+          //cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
           
           swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);  // echange les 2 cells dans la liste cellsµ
 		  
