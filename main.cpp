@@ -381,9 +381,9 @@ void Rectangle::init(){
 }
 
 void Rectangle::draw() {    
-    fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
+	img_box->redraw();
+    //fl_draw_box(FL_BORDER_FRAME, center.x-w/2, center.y-h/2, w, h, frameColor);
     Text(to_string(id), {center.x + 30, center.y + 30}).draw();
-	  img_box->redraw();
 }
 
 void Rectangle::setFillColor(Fl_Color newFillColor) {
@@ -402,6 +402,17 @@ bool Rectangle::contains(Point p) {
 }
 
 
+struct Translation {
+  Translation(Point p) {
+    fl_push_matrix();
+    fl_translate(p.x, p.y);
+  }
+  ~Translation() {
+    fl_pop_matrix();
+  }
+};
+
+
 
 
 /*--------------------------------------------------
@@ -411,7 +422,7 @@ Cell class.
 The Canvas class below will have cells as instance
 vraiables and call the methods of Cell
 --------------------------------------------------*/
-
+class Animation;
 
 class Cell {
   Rectangle r;
@@ -419,6 +430,7 @@ class Cell {
   int id, ligne, colonne;
   bool clicked = False;
   vector<Cell *> neighbors;
+  Animation* anim;
  public:
   // Constructor
   Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int colonne);
@@ -453,25 +465,109 @@ class Cell {
 
   Rectangle &getRect(){return r;}
 
+  bool getAnim(){ return anim != nullptr ? True : False;}
+
   // Methods that draw and handle events
   void draw();
+  void drawWithoutAnimation();
   void mouseMove(Point mouseLoc);
   void mouseClick(Point mouseLoc);
+  void setAnimation(Animation *a);
 
 };
+
+
+class Animation {
+
+	public:
+		enum AnimationType{swap, explode};
+
+	private:
+		const int animationTime = 20;
+		const int bounceHeight = 200;
+		Cell *base;
+		Cell *base2;
+    Point coord_base;
+    Point coord_base2;
+
+		AnimationType animationType;
+		int time{0};
+		Point currentTranslation();
+	public:
+	Animation(Cell* cellToAnimate, Cell* cellAutre, AnimationType animationType):
+		base{cellToAnimate}, base2{cellAutre}, animationType{animationType} {
+      coord_base = base->getRect().getCenter();
+      coord_base2 = base2->getRect().getCenter();
+    }
+	void draw();
+	bool isComplete();
+
+};
+
+void Animation::draw(){
+	time = time + 3;
+	base->drawWithoutAnimation();
+	base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
+	base->getRect().setCenter({currentTranslation().x + 50, currentTranslation().y + 50});
+}
+
+Point Animation::currentTranslation(){
+	int b_x = coord_base.x;
+	int b_y = coord_base.y;
+	int b2_x = coord_base2.x;
+	int b2_y = coord_base2.y;
+	int dif_x = b_x - b2_x;
+	int dif_y = b_y - b2_y;
+
+	if(dif_y > 0){   // b est en dessous de b2
+		return {b_x - 50, b_y -50 - time};
+	}else if(dif_y < 0){     // b est au dessu de b2
+		return {b_x - 50, b_y -50  + time};
+	}
+
+	else if(dif_x > 0){   // b est a droite de b2
+		return {b_x -50 - time, b_y - 50};
+	}else if(dif_x < 0){    //b est a gauche de b2
+		return {b_x -50 + time, b_y - 50};
+	}
+}
+
+bool Animation::isComplete(){
+	if (time > 100)
+	{
+		base->getRect().getImageBox()->position(coord_base2.x - 50, coord_base2.y - 50);
+		base->getRect().setCenter({coord_base2.x, coord_base2.y});
+		return True;
+	}
+	
+	return False;
+}
 
 Cell::Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int colonne):
 	r(center, w, h,id, color.locImg),
 	color{color.color},
 	id{id},
 	ligne{ligne},
-	colonne{colonne}
+	colonne{colonne},
+	anim{nullptr}
 {}
 
 
 void Cell::draw() {
-    if (clicked){
-        r.setFrameColor(FL_WHITE);
+    if(anim && anim->isComplete()){
+		delete anim;
+		anim = nullptr;
+	}
+	if(anim){
+		anim->draw();
+	}else{
+		drawWithoutAnimation();
+	}
+}
+
+void Cell::drawWithoutAnimation(){
+	if (clicked){
+        fl_draw_box(FL_BORDER_FRAME, r.getCenter().x-r.getWidth()/2, r.getCenter().y-r.getHeight()/2, r.getWidth(), r.getHeight(), FL_WHITE);
     }
     r.draw();
 }
@@ -486,17 +582,25 @@ void Cell::mouseMove(Point mouseLoc) {
 
 
 void Cell::mouseClick(Point mouseLoc) {
-    if (r.contains(mouseLoc)){
-        if (isClicked())
-        {
-            setclicked(False);
-        }
-        else
-        {
+	if (!anim)
+	{
+		if (r.contains(mouseLoc)){
+        	if (isClicked())
+        	{
+            	setclicked(False);
+        	}
+        	else
+        	{
             setclicked(True);
-        }
-    }
+        	}
+    	}
+	}
 }
+
+void Cell::setAnimation(Animation *a){
+	anim = a;
+}
+
 
 
 
@@ -549,14 +653,15 @@ class Canvas {
   void updatehigh();
   void printCells();
   void setrandcolor();
+  bool checkmvmt();
 };
-
 
 Canvas::Canvas() {
   initBG();
   string niveau;
   int b_type, id, elem;
 	file.open("niveaux/n1/1.txt");
+
 	for (int x = 0; x<9; x++) {
 		cells.push_back({});
 	}
@@ -596,6 +701,7 @@ void Canvas::draw() {
   for (auto &v: cells)
     for (auto &c: v)
       c.draw();
+	  checkNeighbors();
 }
 
 void Canvas::mouseMove(Point mouseLoc) {
@@ -610,24 +716,23 @@ void Canvas::mouseClick(Point mouseLoc) {
 	  CTS cts;
     for (auto &v: cells){
         for (auto &c: v){
-            c.mouseClick(mouseLoc);
-            for (auto &n : c.getNeighbors()){
-                if(c.isClicked() && n->isClicked()){
-                    switched = True;
+				c.mouseClick(mouseLoc);
+				for (auto &n : c.getNeighbors()){
+					if(c.isClicked() && n->isClicked()){
+						switched = True;
+						ImageBonbon ib_1 = c.getRect().getImageBonbon();
+						ImageBonbon ib_2 = n->getRect().getImageBonbon();
+						Point coord_1 = c.getCoord();
+						Point coord_2 = n->getCoord();
+						CTS cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
 
-                    ImageBonbon ib_1 = c.getRect().getImageBonbon();
-                    ImageBonbon ib_2 = n->getRect().getImageBonbon();
-
-                    Point coord_1 = c.getCoord();
-				          	Point coord_2 = n->getCoord();
-
-				          	CTS cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
-                }
-            }
+					}
+           		}  
         }
     }
     if (switched)
     {
+		  
           switchCells(cts);
           resetClicks();
           checkNeighbors();
@@ -636,17 +741,18 @@ void Canvas::mouseClick(Point mouseLoc) {
 }  
 
 void Canvas::switchCells(CTS cts){
-          cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
-          cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
-
-          swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);  // echange les 2 cells dans la liste cells
-
+          
+          
+          swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);  // echange les 2 cells dans la liste cellsµ
+		  
+		  Animation *a = new Animation(&cells[cts.coord_1.x][cts.coord_1.y], &cells[cts.coord_2.x][cts.coord_2.y], static_cast<Animation::AnimationType>(0));
+          cells[cts.coord_2.x][cts.coord_2.y].setAnimation(a);
+          Animation *aa = new Animation(&cells[cts.coord_2.x][cts.coord_2.y], &cells[cts.coord_1.x][cts.coord_1.y], static_cast<Animation::AnimationType>(0));
+		  cells[cts.coord_1.x][cts.coord_1.y].setAnimation(aa);
+		  
           //Cell 1
-
+		
           cells[cts.coord_1.x][cts.coord_1.y].setCoord({cts.coord_1.x, cts.coord_1.y});
-
-          cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBonbon({cts.img_2.box, cts.img_2.png});
-          cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
 
           cells[cts.coord_1.x][cts.coord_1.y].setTypeColor(cts.type_2);
 
@@ -654,11 +760,9 @@ void Canvas::switchCells(CTS cts){
 
           cells[cts.coord_2.x][cts.coord_2.y].setCoord({cts.coord_2.x,cts.coord_2.y});
 
-          cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBonbon({cts.img_1.box, cts.img_1.png});
-          cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
-
           cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
-          //printCells();
+
+          printCells();
           updateNeighbors();
           
 }
@@ -695,6 +799,15 @@ void Canvas::setrandcolor(){
     }
 }
 
+bool Canvas::checkmvmt(){
+	for(auto &v : cells)
+    for (auto &c : v){
+		if (c.getAnim()){
+			return True;
+		}
+	}
+	return False;
+}
 
 bool Canvas::setNulls(){
     // mets a zero la color de toutes les cells pointant vers blank (celles qui viennent d'exploser)
@@ -706,6 +819,11 @@ bool Canvas::setNulls(){
             c.setTypeColor(0); 
             poufed = true;
           }
+		  if (c.getTypeColor() == 0)
+		  {
+			  poufed = true;
+		  }
+		  
         }
     return poufed;
 }
@@ -717,18 +835,19 @@ void Canvas::swapUP(){
       if(point.x > 0){
         while ((point.x-counter) >= 0 && cells[point.x-counter][point.y].getX() >= 0 && cells[point.x-counter][point.y].getTypeColor() != 0) 
         {
-          CTS cts = {cells[point.x-counter][point.y].getRect().getCenter(), cells[point.x-counter+1][point.y].getRect().getCenter(),
-                cells[point.x-counter][point.y].getRect().getImageBonbon(), cells[point.x-counter+1][point.y].getRect().getImageBonbon(),
-                cells[point.x-counter][point.y].getCoord(), cells[point.x-counter+1][point.y].getCoord(),
-                cells[point.x-counter][point.y].getTypeColor(), cells[point.x-counter+1][point.y].getTypeColor()};
+          CTS cts = {cells[point.x-counter+1][point.y].getRect().getCenter(), cells[point.x-counter][point.y].getRect().getCenter(),
+                cells[point.x-counter+1][point.y].getRect().getImageBonbon(), cells[point.x-counter][point.y].getRect().getImageBonbon(),
+                cells[point.x-counter+1][point.y].getCoord(), cells[point.x-counter][point.y].getCoord(),
+                cells[point.x-counter+1][point.y].getTypeColor(), cells[point.x-counter][point.y].getTypeColor()};
           switchCells(cts);
+          //CTS.1 vide CTS.2 Celle au dessus de la vide
           counter++;
         }
       }
     }
     toSwap.clear();
     setrandcolor();
-	  checkNeighbors();
+	checkNeighbors();
     printCells();
 }
 
@@ -754,12 +873,15 @@ void Canvas::updateNeighbors(){
 }
 
 void Canvas::checkNeighbors(){
-	checkNeighborsX();
-	checkNeighborsY();
-  if (setNulls())
-  {
-    swapUP();
-  }
+	if (!checkmvmt())
+	{
+		checkNeighborsX();
+		checkNeighborsY();
+		if (setNulls())
+		{
+			swapUP();
+		}
+	}
 }
 
 void Canvas::checkNeighborsX(){
