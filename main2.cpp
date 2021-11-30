@@ -819,7 +819,8 @@ void Canvas::checkClicks(){
     }    
 }
 void Canvas::setrandcolor(){
-  for(auto &v : cells)
+	if(!inAnim && toSwap.size() == 0){
+		for(auto &v : cells)
     for (auto &c : v){
       if (c.getTypeColor() == 0){
         int randColor = (rand() % 6) + 1;
@@ -827,6 +828,7 @@ void Canvas::setrandcolor(){
         c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg); 
       }
     }
+	}
 }
 
 
@@ -856,6 +858,7 @@ void Canvas::swapUP(){
                 cells[point.x-counter+1][point.y].getRect().getImageBonbon(), cells[point.x-counter][point.y].getRect().getImageBonbon(),
                 cells[point.x-counter+1][point.y].getCoord(), cells[point.x-counter][point.y].getCoord(),
                 cells[point.x-counter+1][point.y].getTypeColor(), cells[point.x-counter][point.y].getTypeColor()};
+				inAnim = True;
           switchCells(cts);
           //CTS.1 vide CTS.2 Celle au dessus de la vide
           counter++;
@@ -863,8 +866,8 @@ void Canvas::swapUP(){
       }
     }
     toSwap.clear();
-    setrandcolor();
-	  checkNeighbors();
+	setrandcolor();
+	checkNeighbors();
     printCells();
 }
 
