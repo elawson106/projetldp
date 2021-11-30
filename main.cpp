@@ -482,14 +482,17 @@ class Animation {
 	private:
 		const int animationTime = 20;
 		const int bounceHeight = 200;
-		Cell *base;
-		Cell *base2;
+		Fl_Box* box;
+		Point base;
+		Point to;
 		AnimationType animationType;
 		int time{0};
 		Point currentTranslation();
 	public:
-	Animation(Cell* cellToAnimate, Cell* cellAutre, AnimationType animationType):
-		base{cellToAnimate}, base2{cellAutre}, animationType{animationType} {}
+	Animation(Fl_Box* box, Point to, AnimationType animationType):
+		box{box}, to{to}, animationType{animationType} {
+			base = {box->x(), box->y()};
+		}
 	void draw();
 	bool isComplete();
 
@@ -497,45 +500,35 @@ class Animation {
 
 void Animation::draw(){
 	++time;
-	Translation t3{currentTranslation()};
-	base->drawWithoutAnimation();
-	base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
+	++time;
+	//Translation t3{currentTranslation()};
+	box->position(currentTranslation().x, currentTranslation().y);
 }
 
 Point Animation::currentTranslation(){
-	int b_x = base->getRect().getImageBox()->x();
-	int b_y = base->getRect().getImageBox()->y();
-	int b2_x = base2->getRect().getImageBox()->x();
-	int b2_y = base2->getRect().getImageBox()->y();
-	int dif_x = 0;
-	int dif_y = 0;
-	if(b_x > b2_x){
-		dif_x = b_x - b2_x;
-	}else if(b_x < b2_x){
-		dif_x = b2_x - b_x;
-	}
-
-	if(b_y > b2_y){
-		dif_y = b_y - b2_y;
-	}else if(b_y < b2_y){
-		dif_y = b2_y - b_y;
-	}
-
+	int b_x = base.x;
+	int b_y = base.y;
+	int b2_x = to.x;
+	int b2_y = to.y;
+	int dif_x = b_x - b2_x;
+	int dif_y = b_y - b2_y;
 	if(dif_y > 0){
+		return {b_x, b_y- time};
+	} else if(dif_y < 0){
 		return {b_x, b_y + time};
-	}else if(dif_y < 0){
-		return {b_x, b_y - time};
 	}
 
 	if(dif_x > 0){
-		return {b_x + time, b_y};
-	}else if(dif_x < 0){
+		printf("oui");
 		return {b_x - time, b_y};
+	}else if(dif_x < 0){
+		printf("ouii");
+		return {b_x + time, b_y};
 	}
 }
 
 bool Animation::isComplete(){
-	return time > 13;
+	return time > 100;
 }
 
 Cell::Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int colonne):
@@ -729,12 +722,15 @@ void Canvas::mouseClick(Point mouseLoc) {
 }  
 
 void Canvas::switchCells(CTS cts){
-	Animation *a = new Animation(&cells[cts.coord_1.x][cts.coord_1.y], &cells[cts.coord_2.x][cts.coord_2.y], static_cast<Animation::AnimationType>(0));
-			cells[cts.coord_2.x][cts.coord_2.y].setAnimation(a);
-			Animation *aa = new Animation(&cells[cts.coord_2.x][cts.coord_2.y], &cells[cts.coord_1.x][cts.coord_1.y], static_cast<Animation::AnimationType>(0));
-			cells[cts.coord_1.x][cts.coord_1.y].setAnimation(aa);
+	Point a_ = {cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBonbon().box->x(), cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBonbon().box->y()};
+	Point b_ = {cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBonbon().box->x(), cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBonbon().box->y()};
+	Animation *a = new Animation(cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBonbon().box, b_, static_cast<Animation::AnimationType>(0));
+			cells[cts.coord_1.x][cts.coord_1.y].setAnimation(a);
+			Animation *aa = new Animation(cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBonbon().box, a_, static_cast<Animation::AnimationType>(0));
+			cells[cts.coord_2.x][cts.coord_2.y].setAnimation(aa);
           cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
           cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
+
 
           swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);  // echange les 2 cells dans la liste cells
 
@@ -742,7 +738,7 @@ void Canvas::switchCells(CTS cts){
 
           cells[cts.coord_1.x][cts.coord_1.y].setCoord({cts.coord_1.x, cts.coord_1.y});
 
-          cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBonbon({cts.img_2.box, cts.img_2.png});
+          
           //cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
 
           cells[cts.coord_1.x][cts.coord_1.y].setTypeColor(cts.type_2);
@@ -751,10 +747,12 @@ void Canvas::switchCells(CTS cts){
 
           cells[cts.coord_2.x][cts.coord_2.y].setCoord({cts.coord_2.x,cts.coord_2.y});
 
-          cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBonbon({cts.img_1.box, cts.img_1.png});
           //cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
 
           cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
+
+		  cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBonbon({cts.img_1.box, cts.img_1.png});
+		  cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBonbon({cts.img_2.box, cts.img_2.png});
 
           //printCells();
           updateNeighbors();
