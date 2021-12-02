@@ -1,7 +1,8 @@
 {
     "files.associations": {
-        "random": "cpp",
-        "iosfwd": "cpp",
-        "new": "cpp"
-    }
+		"random": "cpp",
+		"iosfwd": "cpp",
+		"new": "cpp",
+		"iostream": "cpp"
+	}
 }

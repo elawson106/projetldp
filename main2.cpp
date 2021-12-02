@@ -433,6 +433,7 @@ class Cell {
   bool clicked = False;
   vector<Cell *> neighbors;
   Animation* anim;
+  Animation* expl;
  public:
   // Constructor
   Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int colonne);
@@ -475,6 +476,7 @@ class Cell {
   void mouseMove(Point mouseLoc);
   void mouseClick(Point mouseLoc);
   void setAnimation(Animation *a);
+  void setAnimationExplode(Animation *a);
 
 };
 
@@ -489,11 +491,13 @@ class Animation {
 		const int bounceHeight = 200;
 		int counter = 0;
 		int other = 0;
-		int max = 100;
+		int max;
 		Cell *base;
 		Cell *base2;
     Point coord_base;
     Point coord_base2;
+	Color_Image blank;
+	Point currentSize;
 
 		AnimationType animationType;
 		int time{0};
@@ -511,6 +515,13 @@ class Animation {
 	  }
 	  max = t;
     }
+
+	Animation(Cell* cellToAnimate, Color_Image blank,  AnimationType animationType):
+	base{cellToAnimate},blank{blank}, animationType{animationType}{
+		coord_base = base->getRect().getCenter();
+		currentSize = {base->getRect().getImageBox()->w(), base->getRect().getImageBox()->h()};
+		max = 99;
+	}
 	void draw();
 	bool isComplete();
 
@@ -518,38 +529,57 @@ class Animation {
 
 void Animation::draw(){
 	time += 4;
-	base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
-	base->getRect().setCenter({currentTranslation().x + 50, currentTranslation().y + 50});
-	base->drawWithoutAnimation();
+	if(animationType == swap){
+		base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
+		base->getRect().setCenter({currentTranslation().x + 50, currentTranslation().y + 50});
+		base->drawWithoutAnimation();
+	}else if(animationType == explode){
+		cout << "ddddd" << endl;
+		base->getRect().getImageBox()->image(base->getRect().getImageBox()->image()->copy(currentTranslation().x, currentTranslation().y));
+		base->drawWithoutAnimation();
+	}
 	//base->drawWithoutAnimation();
 }
 
 Point Animation::currentTranslation(){
-	int b_x = coord_base.x;
-	int b_y = coord_base.y;
-	int b2_x = coord_base2.x;
-	int b2_y = coord_base2.y;
-	int dif_x = b_x - b2_x;
-	int dif_y = b_y - b2_y;
 
-	if(dif_y > 0){   // b est en dessous de b2
-		return {b_x - 50, b_y -50 - time};
-	}else if(dif_y < 0){     // b est au dessu de b2
-		return {b_x - 50, b_y -50  + time};
-	}
+	if(animationType == swap){
+		int b_x = coord_base.x;
+		int b_y = coord_base.y;
+		int b2_x = coord_base2.x;
+		int b2_y = coord_base2.y;
+		int dif_x = b_x - b2_x;
+		int dif_y = b_y - b2_y;
 
-	else if(dif_x > 0){   // b est a droite de b2
-		return {b_x -50 - time, b_y - 50};
-	}else if(dif_x < 0){    //b est a gauche de b2
-		return {b_x -50 + time, b_y - 50};
+		if(dif_y > 0){   // b est en dessous de b2
+			return {b_x - 50, b_y -50 - time};
+		}else if(dif_y < 0){     // b est au dessu de b2
+			return {b_x - 50, b_y -50  + time};
+		}
+
+		else if(dif_x > 0){   // b est a droite de b2
+			return {b_x -50 - time, b_y - 50};
+		}else if(dif_x < 0){    //b est a gauche de b2
+			return {b_x -50 + time, b_y - 50};
+		}
+	} else if(animationType == explode){
+		//cout << "test" << endl;
+		return {currentSize.x - time, currentSize.y - time};
 	}
 }
 
 bool Animation::isComplete(){
 	if(time > max){
-		base->getRect().getImageBox()->position(coord_base2.x - 50, coord_base2.y - 50);
-		base->getRect().setCenter({coord_base2.x, coord_base2.y});
-		return True;
+		if(animationType == swap){
+			base->getRect().getImageBox()->position(coord_base2.x - 50, coord_base2.y - 50);
+			base->getRect().setCenter({coord_base2.x, coord_base2.y});
+			cout << "TIME - " << time << endl;
+			return True;
+		} else if(animationType == explode){
+			base->getRect().getImageBox()->image(blank.locImg);
+			cout << "TIME EXPLODE - " << time << endl;
+			return True;
+		}
 	}
 	return False;
 }
@@ -560,7 +590,8 @@ Cell::Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int
 	id{id},
 	ligne{ligne},
 	colonne{colonne},
-	anim{nullptr}
+	anim{nullptr},
+	expl{nullptr}
 {}
 
 
@@ -569,8 +600,16 @@ void Cell::draw() {
 		delete anim;
 		anim = nullptr;
 	}
-	if(anim){
+	if(expl && expl->isComplete()){
+		delete expl;
+		expl = nullptr;
+	}
+	if(expl){
+		expl->draw();
+		cout << "expl" << endl;
+	}else if(anim){
 		anim->draw();
+		cout << "anim" << endl;
 	}else{
 		drawWithoutAnimation();
 	}
@@ -612,6 +651,10 @@ void Cell::mouseClick(Point mouseLoc) {
 
 void Cell::setAnimation(Animation *a){
 	anim = a;
+}
+
+void Cell::setAnimationExplode(Animation *a){
+	expl = a;
 }
 
 
@@ -975,8 +1018,11 @@ void Canvas::pouf(Recurrence recurrence){
       if(count.amount >= 3){
         for(int i = count.start.x; i <= count.finish.x; i++){
           for(int j = count.start.y; j <= count.finish.y; j++){
-            cells[i][j].getRect().getImageBox()->image(images.blank());
-            toSwap.push_back({i, j});
+            //cells[i][j].getRect().getImageBox()->image(images.blank());
+			//inAnim = True;
+			Animation *a = new Animation(&cells[i][j], images.getImginf(0), static_cast<Animation::AnimationType>(1));
+			cells[i][j].setAnimationExplode(a);
+			toSwap.push_back({i, j});
           }
         }
       }
