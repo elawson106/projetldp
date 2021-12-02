@@ -503,10 +503,13 @@ class Animation {
 		base{cellToAnimate}, base2{cellAutre}, animationType{animationType} {
       coord_base = base->getRect().getCenter();
       coord_base2 = base2->getRect().getCenter();
-	  if(coord_base2.y - 50 < 100){
-			coord_base2.y = 150;
-			cout << "IIIIIIIIII" << endl;
-		}
+	  int t = coord_base.y - coord_base2.y;
+	  if (t < 0){
+		  t = coord_base2.y - coord_base.y;
+	  } else if(t == 0){
+		  t = 100;
+	  }
+	  max = t;
     }
 	void draw();
 	bool isComplete();
@@ -514,9 +517,7 @@ class Animation {
 };
 
 void Animation::draw(){
-	time++;
-	time++;
-	time++;
+	time += 4;
 	base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
 	base->getRect().setCenter({currentTranslation().x + 50, currentTranslation().y + 50});
 	base->drawWithoutAnimation();
@@ -711,20 +712,15 @@ void Canvas::initBG(){
 void Canvas::draw() {
   Text(to_string(highscore), {850, 50}, 20).draw();
   Text(to_string(score), {100, 50}, 20).draw();
-  Cell *temp = nullptr;
+  bool isPassed = False;
   bool switched = False;
   bool temp_anim;
   CTS cts;
   for (auto &v: cells)
     for (auto &c: v){
-		if(c.getAnim()){
-			temp_anim = True;
-		}
-		if(temp == nullptr && c.isClicked()){
-			temp = &c;
-			cout << "ok - " << temp << endl;
+		if(!isPassed && c.isClicked()){
+			isPassed = True;
 		}else if(c.isClicked()){
-			cout << "ogay" << endl;
 			for (auto &n : c.getNeighbors()){
                 if(c.isClicked() && n->isClicked()){
                     switched = True;
@@ -737,6 +733,7 @@ void Canvas::draw() {
 				          	cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
                 }
             }
+			isPassed = False;
 		}
 		if (switched && !inAnim)
     	{
@@ -747,6 +744,10 @@ void Canvas::draw() {
 			checkNeighbors();
     	}
       c.draw();
+	  if(c.getAnim()){
+			temp_anim = True;
+			inAnim = True;
+		}
 	}
 	//cout << "TEMP ANIM - " << temp_anim << endl;
 	if(!temp_anim){
@@ -776,10 +777,8 @@ void Canvas::mouseMove(Point mouseLoc) {
 
 void Canvas::switchCells(CTS cts){
           //printf("dddddd");
-		  cout << "mag - " << cts.coord_1.x << " - " << cts.coord_1.y<< endl;
           cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
           cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
-		  cout << "mag" << endl;
 				Animation *a = new Animation(&cells[cts.coord_1.x][cts.coord_1.y], &cells[cts.coord_2.x][cts.coord_2.y], static_cast<Animation::AnimationType>(0));
 			cells[cts.coord_2.x][cts.coord_2.y].setAnimation(a);
 			Animation *aa = new Animation(&cells[cts.coord_2.x][cts.coord_2.y], &cells[cts.coord_1.x][cts.coord_1.y], static_cast<Animation::AnimationType>(0));
@@ -833,19 +832,20 @@ void Canvas::checkClicks(){
 }
 void Canvas::setrandcolor(){
 	if(!inAnim && toSwap.size() == 0){
-		for(auto &v : cells)
-    for (auto &c : v){
-      if (c.getTypeColor() == 0){
-        int randColor = (rand() % 6) + 1;
-		c.getRect().getImageBonbon().box->position(c.getRect().getImageBonbon().box->x(), c.getRect().getImageBonbon().box->y() - 100);
-		c.getRect().setCenter({c.getRect().getCenter().x, c.getRect().getCenter().y - 100});
-        c.setTypeColor(randColor);
-		Cell c_ = {{c.getRect().getCenter().x, c.getRect().getCenter().y + 100}, 100, 100, images.getImginf(1), c.getId(), c.getX(), c.getY()};
-		Animation *a = new Animation(&c, &c_, static_cast<Animation::AnimationType>(0));
-		c.setAnimation(a);
-        c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg); 
-      }
-    }
+		for(auto &v : cells){
+			for (auto &c : v){
+				if (c.getTypeColor() == 0){
+					int randColor = (rand() % 6) + 1;
+					c.setTypeColor(randColor);
+					Cell c_ = {{c.getRect().getCenter().x, c.getRect().getCenter().y}, 100, 100, images.getImginf(1), c.getId(), c.getX(), c.getY()};
+					c.getRect().getImageBonbon().box->position(c.getRect().getImageBonbon().box->x(), c.getRect().getImageBonbon().box->y() - 300);
+					c.getRect().setCenter({c.getRect().getCenter().x, c.getRect().getCenter().y - 300});
+					Animation *a = new Animation(&c, &c_, static_cast<Animation::AnimationType>(0));
+					c.setAnimation(a);
+					c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg); 
+				}
+			}
+		}
 	}
 }
 
