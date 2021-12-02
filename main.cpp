@@ -496,7 +496,7 @@ class Animation {
     Point coord_base2;
 
 		AnimationType animationType;
-		int time{0};
+		int time = 0;
 		Point currentTranslation();
 	public:
 	Animation(Cell* cellToAnimate, Cell* cellAutre, AnimationType animationType):
@@ -515,7 +515,7 @@ class Animation {
 };
 
 void Animation::draw(){
-		time = time + 1;
+		time = time + 2;
 		if (animationType == swap)
 		{
 			base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
@@ -524,7 +524,6 @@ void Animation::draw(){
 		}
 		else if (animationType == explode)
 		{
-			cout << "yop";
 			base->getRect().getImageBox()->image(base->getRect().getImageBox()->image()->copy(currentTranslation().x, currentTranslation().y));
 			base->drawWithoutAnimation();
 		}
