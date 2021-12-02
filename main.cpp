@@ -515,7 +515,7 @@ class Animation {
 };
 
 void Animation::draw(){
-		time = time + 3;
+		time = time + 1;
 		if (animationType == swap)
 		{
 			base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
@@ -525,7 +525,6 @@ void Animation::draw(){
 		else if (animationType == explode)
 		{
 			cout << "yop";
-			//base->getRect().getImageBox()->resize(coord_base.x - 50, coord_base.y - 50 , currentTranslation().x, currentTranslation().y);
 			base->getRect().getImageBox()->image(base->getRect().getImageBox()->image()->copy(currentTranslation().x, currentTranslation().y));
 			base->drawWithoutAnimation();
 		}
@@ -808,12 +807,13 @@ void Canvas::switchCells(CTS cts){
           cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
           cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
 		  cout << "mag" << endl;
-				Animation *a = new Animation(&cells[cts.coord_1.x][cts.coord_1.y], &cells[cts.coord_2.x][cts.coord_2.y], static_cast<Animation::AnimationType>(0));
-			cells[cts.coord_2.x][cts.coord_2.y].setAnimation(a);
-			Animation *aa = new Animation(&cells[cts.coord_2.x][cts.coord_2.y], &cells[cts.coord_1.x][cts.coord_1.y], static_cast<Animation::AnimationType>(0));
-			cells[cts.coord_1.x][cts.coord_1.y].setAnimation(aa);
-		swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);  // echange les 2 cells dans la liste cellsµ
+		  Animation *a = new Animation(&cells[cts.coord_1.x][cts.coord_1.y], &cells[cts.coord_2.x][cts.coord_2.y], static_cast<Animation::AnimationType>(0));
+		  cells[cts.coord_2.x][cts.coord_2.y].setAnimation(a);
+	      Animation *aa = new Animation(&cells[cts.coord_2.x][cts.coord_2.y], &cells[cts.coord_1.x][cts.coord_1.y], static_cast<Animation::AnimationType>(0));
+		  cells[cts.coord_1.x][cts.coord_1.y].setAnimation(aa);
+		  swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);  // echange les 2 cells dans la liste cellsµ
 		  cout << "mag" << endl;
+		  
           //Cell 1
 		
           cells[cts.coord_1.x][cts.coord_1.y].setCoord({cts.coord_1.x, cts.coord_1.y});
@@ -1003,7 +1003,8 @@ void Canvas::pouf(Recurrence recurrence){
       if(count.amount >= 3){
         for(int i = count.start.x; i <= count.finish.x; i++){
           for(int j = count.start.y; j <= count.finish.y; j++){
-			  inAnim = True;
+			//cells[i][j].getRect().getImageBox()->image(images.blank());
+			inAnim = True;
 			Animation *a = new Animation(&cells[i][j], images.getImginf(0), static_cast<Animation::AnimationType>(1));
 			cells[i][j].setAnimation(a);
             toSwap.push_back({i, j});
