@@ -764,6 +764,29 @@ void Canvas::draw() {
 	CTS cts;
 	for (auto &v: cells)
 		for (auto &c: v){
+			if(!isPassed && c.isClicked()){
+				isPassed = True;
+			}else if(c.isClicked()){
+				for (auto &n : c.getNeighbors()){
+					if(c.isClicked() && n->isClicked()){
+						switched = True;
+						ImageBonbon ib_1 = c.getRect().getImageBonbon();
+						ImageBonbon ib_2 = n->getRect().getImageBonbon();
+						Point coord_1 = c.getCoord();
+								Point coord_2 = n->getCoord();
+					cout << "okey" << endl;
+
+								cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
+					}
+				}
+				isPassed = False;
+			}
+			if (switched && !isAnimated())
+			{
+				switchCells(cts);
+				resetClicks();
+				//checkNeighbors();
+			}
 			c.draw();
 		}
 
