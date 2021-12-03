@@ -31,7 +31,7 @@ MIGUEL LOZANO
 #include <fstream>
 #include <array>
 #include <thread>
-#include <unistd.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -343,9 +343,9 @@ class Rectangle {
 
   void setCenter(Point newC) {center = newC;}
 
-  void setImageBox(Fl_Box* box) {img_box = box;}
+  //void setImageBox(Fl_Box* box) {img_box = box;}
 
-  void setImagePng(Fl_PNG_Image* png) {png_img = png;}
+  //void setImagePng(Fl_PNG_Image* png) {png_img = png;}
 
   void setImageBonbon(ImageBonbon img_bonbon) {
     img_box = img_bonbon.box;
@@ -364,9 +364,9 @@ class Rectangle {
 
   ImageBonbon getImageBonbon() {return {img_box, png_img};}
 
-  Fl_Box* getImageBox() {return img_box;}
+  //Fl_Box* getImageBox() {return img_box;}
 
-  Fl_PNG_Image* getImagePng() {return png_img;}
+  //Fl_PNG_Image* getImagePng() {return png_img;}
   //others
   void init();
   void draw();
@@ -427,59 +427,55 @@ vraiables and call the methods of Cell
 class Animation;
 
 class Cell {
-  Rectangle r;
-  int color;
-  int id, ligne, colonne;
-  bool clicked = False;
-  vector<Cell *> neighbors;
-  Animation* anim;
-  Animation* expl;
- public:
-  // Constructor
-  Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int colonne);
-  //Setters
-  void setTypeColor(int col){color = col;}
-  void setX(int x){ ligne = x;}
-  void setY(int y){ colonne= y;}
-  void setclicked(bool value){
-      clicked = value;
-  }
-  void setNeighbors(const vector<Cell *> newNeighbors) {
-    neighbors = newNeighbors;
-  }
-  void setCoord(Point xy) {
-    ligne = xy.x;
-    colonne = xy.y;
-  }
-  // getters
-  int getX(){return ligne;}
+	Rectangle r;
+	int color;
+	int id, ligne, colonne;
+	bool clicked = False;
+	vector<Cell *> neighbors;
+	Animation* anim;
 
-  int getY(){return colonne;}
+	public:
+	// Constructor
+	Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int colonne);
+	//Setters
+	void setTypeColor(int col){color = col;}
+	void setX(int x){ ligne = x;}
+	void setY(int y){ colonne= y;}
+	void setclicked(bool value){
+		clicked = value;
+	}
+	void setNeighbors(const vector<Cell *> newNeighbors) {
+	neighbors = newNeighbors;
+	}
+	void setCoord(Point xy) {
+	ligne = xy.x;
+	colonne = xy.y;
+	}
+	// getters
+	int getX(){return ligne;}
 
-  int getId(){return id;}
+	int getY(){return colonne;}
 
-  int getTypeColor(){return color;}
+	int getId(){return id;}
 
-  Point getCoord() {return {ligne, colonne};}
+	int getTypeColor(){return color;}
 
-  bool isClicked(){return clicked;}
+	Point getCoord() {return {ligne, colonne};}
 
-  vector<Cell *> getNeighbors(){return neighbors;}
+	bool isClicked(){return clicked;}
 
-  Rectangle &getRect(){return r;}
+	vector<Cell *> getNeighbors(){return neighbors;}
 
-  Animation *getAnimS(){ return anim;}
+	Rectangle &getRect(){return r;}
 
-  Animation *getAnimE(){ return expl;}
+	Animation *getAnim(){ return anim;}
 
-
-  // Methods that draw and handle events
-  void draw();
-  void drawWithoutAnimation();
-  void mouseMove(Point mouseLoc);
-  void mouseClick(Point mouseLoc);
-  void setAnimation(Animation *a);
-  void setAnimationExplode(Animation *a);
+	// Methods that draw and handle events
+	void draw();
+	void drawWithoutAnimation();
+	void mouseMove(Point mouseLoc);
+	void mouseClick(Point mouseLoc);
+	void setAnimation(Animation *a);
 
 };
 
@@ -490,62 +486,64 @@ class Animation {
 		enum AnimationType{swap, explode};
 
 	private:
-		const int animationTime = 20;
-		const int bounceHeight = 200;
-		int counter = 0;
-		int other = 0;
-		int max;
+		int vitesse = 5;
+		int max = 100;
 		Cell *base;
 		Cell *base2;
-    Point coord_base;
-    Point coord_base2;
-	Color_Image blank;
-	Point currentSize;
+		Point coord_base;
+		Point coord_base2;
+		Point currentSize;
+
+		Color_Image blank;
 
 		AnimationType animationType;
 		int time{0};
 		Point currentTranslation();
-	public:
-	Animation(Cell* cellToAnimate, Cell* cellAutre, AnimationType animationType):
-		base{cellToAnimate}, base2{cellAutre}, animationType{animationType} {
-      coord_base = base->getRect().getCenter();
-      coord_base2 = base2->getRect().getCenter();
-	  int t = coord_base.y - coord_base2.y;
-	  if (t < 0){
-		  t = coord_base2.y - coord_base.y;
-	  } else if(t == 0){
-		  t = 100;
-	  }
-	  max = t;
-    }
 
-	Animation(Cell* cellToAnimate, Color_Image blank,  AnimationType animationType):
-	base{cellToAnimate},blank{blank}, animationType{animationType}{
-		coord_base = base->getRect().getCenter();
-		currentSize = {base->getRect().getImageBox()->w(), base->getRect().getImageBox()->h()};
-		max = 99;
-	}
+	public:
+		Animation(Cell* cellToAnimate, Cell* cellAutre, AnimationType animationType, int speed=0):
+		base{cellToAnimate}, base2{cellAutre}, animationType{animationType} {
+
+			coord_base = base->getRect().getCenter();
+			coord_base2 = base2->getRect().getCenter();
+
+			int t = coord_base.y - coord_base2.y;
+			if (t < 0){
+				t = coord_base2.y - coord_base.y;
+			} else if(t == 0){
+				t = 100;
+			}
+
+			max = t;
+			if (speed != 0){vitesse = speed;}	
+		}
+
+		Animation(Cell* cellToAnimate, Color_Image blank,  AnimationType animationType):
+			base{cellToAnimate},blank{blank}, animationType{animationType}{
+			coord_base = base->getRect().getCenter();
+			currentSize = {base->getRect().getImageBonbon().box->w(), base->getRect().getImageBonbon().box->h()};
+			max = 90;
+		}
 	void draw();
 	bool isComplete();
+	AnimationType getType() {return animationType;}
 
 };
 
 void Animation::draw(){
-	time += 4;
+	time += vitesse;
 	if(animationType == swap){
-		base->getRect().getImageBox()->position(currentTranslation().x, currentTranslation().y);
+		base->getRect().getImageBonbon().box->position(currentTranslation().x, currentTranslation().y);
 		base->getRect().setCenter({currentTranslation().x + 50, currentTranslation().y + 50});
 		base->drawWithoutAnimation();
 	}else if(animationType == explode){
-		cout << "ddddd" << endl;
-		base->getRect().getImageBox()->image(base->getRect().getImageBox()->image()->copy(currentTranslation().x, currentTranslation().y));
+		base->getRect().getImageBonbon().box->image(base->getRect().getImageBonbon().box->image()->copy(currentTranslation().x, currentTranslation().y));
 		base->drawWithoutAnimation();
 	}
 	//base->drawWithoutAnimation();
 }
 
 Point Animation::currentTranslation(){
-
 	if(animationType == swap){
 		int b_x = coord_base.x;
 		int b_y = coord_base.y;
@@ -565,8 +563,7 @@ Point Animation::currentTranslation(){
 		}else if(dif_x < 0){    //b est a gauche de b2
 			return {b_x -50 + time, b_y - 50};
 		}
-	} else if(animationType == explode){
-		//cout << "test" << endl;
+	}else if(animationType == explode){
 		return {currentSize.x - time, currentSize.y - time};
 	}
 }
@@ -574,15 +571,13 @@ Point Animation::currentTranslation(){
 bool Animation::isComplete(){
 	if(time > max){
 		if(animationType == swap){
-			base->getRect().getImageBox()->position(coord_base2.x - 50, coord_base2.y - 50);
-			base->getRect().setCenter({coord_base2.x, coord_base2.y});
-			cout << "TIME - " << time << endl;
-			return True;
-		} else if(animationType == explode){
-			base->getRect().getImageBox()->image(blank.locImg);
-			cout << "TIME EXPLODE - " << time << endl;
-			return True;
+			base->getRect().getImageBonbon().box->position(coord_base2.x - 50, coord_base2.y - 50);
+		base->getRect().setCenter({coord_base2.x, coord_base2.y});
+		}else if(animationType == explode){
+			base->getRect().getImageBonbon().box->image(blank.locImg);
+			//base->setTypeColor(0);
 		}
+		return True;
 	}
 	return False;
 }
@@ -593,8 +588,7 @@ Cell::Cell(Point center, int w, int h, Color_Image color, int id, int ligne, int
 	id{id},
 	ligne{ligne},
 	colonne{colonne},
-	anim{nullptr},
-	expl{nullptr}
+	anim{nullptr}
 {}
 
 
@@ -603,16 +597,8 @@ void Cell::draw() {
 		delete anim;
 		anim = nullptr;
 	}
-	else if(expl && expl->isComplete()){
-		delete expl;
-		expl = nullptr;
-	}
-	if(expl){
-		expl->draw();
-		cout << "expl" << endl;
-	}else if(anim){
+	if(anim){
 		anim->draw();
-		cout << "anim" << endl;
 	}else{
 		drawWithoutAnimation();
 	}
@@ -656,10 +642,6 @@ void Cell::setAnimation(Animation *a){
 	anim = a;
 }
 
-void Cell::setAnimationExplode(Animation *a){
-	expl = a;
-}
-
 
 
 
@@ -688,6 +670,7 @@ class Canvas {
   ImageBonbon background;
   ImageBonbon bestScore;
   ifstream file;
+  int max_X = -1;
   int score = 0;
   int highscore;
   Img_vector images;
@@ -714,6 +697,22 @@ class Canvas {
   void updatehigh();
   void printCells();
   void setrandcolor();
+  bool inRec(Point p);
+  bool isBlank(){
+	for (auto &v: cells)
+		for (auto &c: v){
+			if(c.getRect().getImageBonbon().box->image() == images.blank())return True;
+	}
+	return False;
+  }
+
+  bool isAnimated(){
+	  for (auto &v: cells)
+		for (auto &c: v){
+			if(c.getAnim())return True;
+		}
+	return False;
+  }
 };
 
 Canvas::Canvas() {
@@ -756,51 +755,47 @@ void Canvas::initBG(){
 }
 
 void Canvas::draw() {
-  Text(to_string(highscore), {850, 50}, 20).draw();
-  Text(to_string(score), {100, 50}, 20).draw();
-  bool isPassed = False;
-  bool switched = False;
-  bool temp_anim;
-  CTS cts;
-  for (auto &v: cells)
-    for (auto &c: v){
-		if(!isPassed && c.isClicked()){
-			isPassed = True;
-		}else if(c.isClicked()){
-			for (auto &n : c.getNeighbors()){
-                if(c.isClicked() && n->isClicked()){
-                    switched = True;
-                    ImageBonbon ib_1 = c.getRect().getImageBonbon();
-                    ImageBonbon ib_2 = n->getRect().getImageBonbon();
-                    Point coord_1 = c.getCoord();
-				          	Point coord_2 = n->getCoord();
-                   cout << "okey" << endl;
+	Text(to_string(highscore), {850, 50}, 20).draw();
+	Text(to_string(score), {100, 50}, 20).draw();
+	bool isPassed = False;
+	bool switched = False;
+	bool temp_anim;
+	CTS cts;
+	for (auto &v: cells)
+		for (auto &c: v){
+			if(!isPassed && c.isClicked()){
+				isPassed = True;
+			}else if(c.isClicked()){
+				for (auto &n : c.getNeighbors()){
+					if(c.isClicked() && n->isClicked()){
+						switched = True;
+						ImageBonbon ib_1 = c.getRect().getImageBonbon();
+						ImageBonbon ib_2 = n->getRect().getImageBonbon();
+						Point coord_1 = c.getCoord();
+								Point coord_2 = n->getCoord();
+					cout << "okey" << endl;
 
-				          	cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
-                }
-            }
-			isPassed = False;
+								cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
+					}
+				}
+				isPassed = False;
+			}
+			if (switched && !isAnimated())
+			{
+				switchCells(cts);
+				resetClicks();
+				//checkNeighbors();
+			}
+			c.draw();
 		}
-		if (switched && !inAnim)
-    	{
-			inAnim = True;
-			temp_anim = True;
-			switchCells(cts);
-			  resetClicks();
-			checkNeighbors();
-    	}
-      c.draw();
-	  if(c.getAnimS()){
-			temp_anim = True;
-			inAnim = True;
-		}
-	}
-	//cout << "TEMP ANIM - " << temp_anim << endl;
-	if(!temp_anim){
-		inAnim = False;
-	}
-	if(!inAnim){
+
+	if(!isAnimated() && !isBlank()){
+		cout << "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDdd" << endl;
 		checkNeighbors();
+	}else if(!isAnimated() && isBlank()){
+		cout << "ododod" << endl;
+		checkNeighbors();
+		setrandcolor();
 	}
 	checkClicks();
 }
@@ -822,35 +817,35 @@ void Canvas::mouseMove(Point mouseLoc) {
 }
 
 void Canvas::switchCells(CTS cts){
-          //printf("dddddd");
-          cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
-          cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
-				Animation *a = new Animation(&cells[cts.coord_1.x][cts.coord_1.y], &cells[cts.coord_2.x][cts.coord_2.y], static_cast<Animation::AnimationType>(0));
-			cells[cts.coord_2.x][cts.coord_2.y].setAnimation(a);
-			Animation *aa = new Animation(&cells[cts.coord_2.x][cts.coord_2.y], &cells[cts.coord_1.x][cts.coord_1.y], static_cast<Animation::AnimationType>(0));
-			cells[cts.coord_1.x][cts.coord_1.y].setAnimation(aa);
-		swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);  // echange les 2 cells dans la liste cellsµ
-		  cout << "mag" << endl;
-          //Cell 1
-		
-          cells[cts.coord_1.x][cts.coord_1.y].setCoord({cts.coord_1.x, cts.coord_1.y});
+	//printf("dddddd");
+	cells[cts.coord_1.x][cts.coord_1.y].getRect().setCenter(cts.center_2);
+	cells[cts.coord_2.x][cts.coord_2.y].getRect().setCenter(cts.center_1);
+	Animation *a = new Animation(&cells[cts.coord_1.x][cts.coord_1.y], &cells[cts.coord_2.x][cts.coord_2.y], static_cast<Animation::AnimationType>(0));
+	cells[cts.coord_2.x][cts.coord_2.y].setAnimation(a);
+	Animation *aa = new Animation(&cells[cts.coord_2.x][cts.coord_2.y], &cells[cts.coord_1.x][cts.coord_1.y], static_cast<Animation::AnimationType>(0));
+	cells[cts.coord_1.x][cts.coord_1.y].setAnimation(aa);
+	swap(cells[cts.coord_1.x][cts.coord_1.y], cells[cts.coord_2.x][cts.coord_2.y]);  // echange les 2 cells dans la liste cellsµ
+	cout << "switchCell - " << cells[cts.coord_1.x][cts.coord_1.y].getId() << " avec " << cells[cts.coord_2.x][cts.coord_2.y].getId() << endl;
+	//Cell 1
 
-          cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBonbon({cts.img_2.box, cts.img_2.png});
-          //cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
+	cells[cts.coord_1.x][cts.coord_1.y].setCoord({cts.coord_1.x, cts.coord_1.y});
 
-          cells[cts.coord_1.x][cts.coord_1.y].setTypeColor(cts.type_2);
+	cells[cts.coord_1.x][cts.coord_1.y].getRect().setImageBonbon({cts.img_2.box, cts.img_2.png});
+	//cells[cts.coord_1.x][cts.coord_1.y].getRect().getImageBox()->position(cts.center_1.x-100/2, cts.center_1.y-100/2);
 
-          //Cell 2
+	cells[cts.coord_1.x][cts.coord_1.y].setTypeColor(cts.type_2);
 
-          cells[cts.coord_2.x][cts.coord_2.y].setCoord({cts.coord_2.x,cts.coord_2.y});
+	//Cell 2
 
-          cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBonbon({cts.img_1.box, cts.img_1.png});
-          //cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
+	cells[cts.coord_2.x][cts.coord_2.y].setCoord({cts.coord_2.x,cts.coord_2.y});
 
-          cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
+	cells[cts.coord_2.x][cts.coord_2.y].getRect().setImageBonbon({cts.img_1.box, cts.img_1.png});
+	//cells[cts.coord_2.x][cts.coord_2.y].getRect().getImageBox()->position(cts.center_2.x-100/2, cts.center_2.y-100/2);
 
-          //printCells();
-          updateNeighbors();
+	cells[cts.coord_2.x][cts.coord_2.y].setTypeColor(cts.type_1);
+
+	//printCells();
+	updateNeighbors();
           
 }
 
@@ -868,16 +863,14 @@ void Canvas::checkClicks(){
         for (auto &c: v){
             if (c.isClicked()){
                 count++;
-				cout << "ouisiti - " << count << endl;
+				//cout << "ouisiti - " << count << endl;
             }   
         }
-    if (count == 2)
-    {
-        resetClicks();
-    }    
 }
+
 void Canvas::setrandcolor(){
-	if(!inAnim && toSwap.size() == 0){
+	if(toSwap.size() == 0){
+		//Application de l'animation d'apparition aux nouvelles cells
 		for(auto &v : cells){
 			for (auto &c : v){
 				if (c.getTypeColor() == 0){
@@ -885,13 +878,14 @@ void Canvas::setrandcolor(){
 					c.setTypeColor(randColor);
 					Cell c_ = {{c.getRect().getCenter().x, c.getRect().getCenter().y}, 100, 100, images.getImginf(1), c.getId(), c.getX(), c.getY()};
 					c.getRect().getImageBonbon().box->position(c.getRect().getImageBonbon().box->x(), c.getRect().getImageBonbon().box->y() - 300);
-					c.getRect().setCenter({c.getRect().getCenter().x, c.getRect().getCenter().y - 300});
-					Animation *a = new Animation(&c, &c_, static_cast<Animation::AnimationType>(0));
+					c.getRect().setCenter({c.getRect().getCenter().x, c.getRect().getCenter().y - (200 + (100 * max_X))});
+					Animation *a = new Animation(&c, &c_, static_cast<Animation::AnimationType>(0), 15);
 					c.setAnimation(a);
 					c.getRect().getImageBonbon().box->image(images.getImginf(randColor).locImg); 
 				}
 			}
 		}
+		max_X = -1;
 	}
 }
 
@@ -901,10 +895,11 @@ bool Canvas::setNulls(){
     bool poufed = false;
     for (auto &v: cells)
         for (auto &c: v){
-          if (c.getRect().getImageBox()->image() == images.blank())
+			cout << "genou" << endl;
+          if (c.getRect().getImageBonbon().box->image() == images.blank())
           {
-            c.setTypeColor(0); 
-            printf("gfd");
+            c.setTypeColor(0);
+			cout << "IMG - " << c.getId() << " - " << c.getTypeColor() << endl; 
             poufed = true;
           }
         }
@@ -912,27 +907,32 @@ bool Canvas::setNulls(){
 }
     
 void Canvas::swapUP(){
+	//reverse(toSwap.begin(), toSwap.end());
     // decale la chaine de cells qui vient de pop (toSwap) vers le haut du tableau
-    for(auto point : toSwap){
-      int counter = 1;
-      if(point.x > 0){
-        while ((point.x-counter) >= 0 && cells[point.x-counter][point.y].getX() >= 0 && cells[point.x-counter][point.y].getTypeColor() != 0) 
-        {
-          CTS cts = {cells[point.x-counter+1][point.y].getRect().getCenter(), cells[point.x-counter][point.y].getRect().getCenter(),
-                cells[point.x-counter+1][point.y].getRect().getImageBonbon(), cells[point.x-counter][point.y].getRect().getImageBonbon(),
-                cells[point.x-counter+1][point.y].getCoord(), cells[point.x-counter][point.y].getCoord(),
-                cells[point.x-counter+1][point.y].getTypeColor(), cells[point.x-counter][point.y].getTypeColor()};
-				inAnim = True;
-          switchCells(cts);
-          //CTS.1 vide CTS.2 Celle au dessus de la vide
-          counter++;
-        }
-      }
-    }
-    toSwap.clear();
-	setrandcolor();
+	vector<Cell *>  test;
+	for(auto &v : cells){
+		for (auto &c : v){
+			if(c.getRect().getImageBonbon().box->image() == images.blank()){
+				test.push_back(&c);
+			}
+		}
+	}
+	for(auto cc : test){
+		int x_now = cc->getX();
+		while (x_now > 0)
+		{
+			x_now--;
+			CTS cts = {cells[x_now+1][cc->getY()].getRect().getCenter(), cells[x_now][cc->getY()].getRect().getCenter(),
+			cells[x_now+1][cc->getY()].getRect().getImageBonbon(), cells[x_now][cc->getY()].getRect().getImageBonbon(),
+			cells[x_now+1][cc->getY()].getCoord(), cells[x_now][cc->getY()].getCoord(),
+			cells[x_now+1][cc->getY()].getTypeColor(), cells[x_now][cc->getY()].getTypeColor()};
+			switchCells(cts);
+		}
+		
+	}
+	//setrandcolor();
 	//checkNeighbors();
-    printCells();
+    //printCells();
 }
 
 
@@ -963,6 +963,7 @@ void Canvas::checkNeighbors(){
 		if (setNulls())
 		{
 			swapUP();
+			toSwap.clear();
 		}
 	}
 }
@@ -1021,22 +1022,27 @@ void Canvas::pouf(Recurrence recurrence){
       if(count.amount >= 3){
         for(int i = count.start.x; i <= count.finish.x; i++){
           for(int j = count.start.y; j <= count.finish.y; j++){
-            //cells[i][j].getRect().getImageBox()->image(images.blank());
-			//inAnim = True;
-			cout<< "NEW ANIMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"<<endl;
-			if (!cells[i][j].getAnimE())
-			{
+            if(!cells[i][j].getAnim() && !inRec({i, j})){
+
 				Animation *a = new Animation(&cells[i][j], images.getImginf(0), static_cast<Animation::AnimationType>(1));
-				cells[i][j].setAnimationExplode(a);
+				cells[i][j].setAnimation(a);
 				toSwap.push_back({i, j});
+				if (i - count.start.x > max_X){max_X = i - count.start.x;} // incrémente max_x utilisé pour calculer le décalage dans setrandom color
+				cout << "POINTTTTTTTTTTTTTTTTTTTTTTTTTTTTT - " << cells[i][j].getId() << cells[i][j].getTypeColor() << endl;
 			}
-			
-			
           }
         }
       }
     }
     addscore(toSwap.size());
+	cout << toSwap.size() << endl;
+}
+
+bool Canvas::inRec(Point p_){
+	for(Point p : toSwap){
+		if(p_.x == p.x && p_.y == p.y)return True;
+	}
+	return False;
 }
 
 void Canvas::addscore(int longeur){
@@ -1088,7 +1094,7 @@ Do not edit!!!!
 class MainWindow : public Fl_Window {
   Canvas canvas;
  public:
-  MainWindow() : Fl_Window(1000, 50, 900, 1000, "Candy Crush by Edem and Miguel") {
+  MainWindow() : Fl_Window(500, 50, 900, 1000, "Candy Crush by Edem and Miguel") {
     Fl::add_timeout(1.0/60, Timer_CB, this);
     //resizable(this);
   }
