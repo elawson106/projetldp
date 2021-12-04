@@ -812,7 +812,7 @@ void Canvas::draw() {
 
 	if(!isAnimated() && !isBlank()){
 		checkNeighbors();
-	}else if(!isAnimated() && isBlank() && !zeroTop()){
+	}else if(isBlank() && !zeroTop()){
 		cout << "swappppppppppppp" << endl;
 		swapUP();
 		
@@ -927,6 +927,7 @@ void Canvas::setNulls(){
 void Canvas::swapUP(){
 	//reverse(toSwap.begin(), toSwap.end());
     // decale la chaine de cells qui vient de pop (toSwap) vers le haut du tableau
+	bool sw = False;
 	for(auto &v : cells){
 		for (auto &c : v){
 			if(c.getRect().getImageBonbon().png == images.blank()){
@@ -937,13 +938,13 @@ void Canvas::swapUP(){
 						cells[x_now+1][c.getY()].getRect().getImageBonbon(), cells[x_now][c.getY()].getRect().getImageBonbon(),
 						cells[x_now+1][c.getY()].getCoord(), cells[x_now][c.getY()].getCoord(),
 						cells[x_now+1][c.getY()].getTypeColor(), cells[x_now][c.getY()].getTypeColor()};
-						switchCells(cts, 5);
-						goto end;
+						switchCells(cts, 8);
+						sw = True;
 					}
 					
 			}
 		}
-		
+		if (sw){goto end;}
 	}
 	end:
 	cout << "goodswap" << endl;
