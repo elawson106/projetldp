@@ -728,7 +728,7 @@ void Canvas::swapUP(){
     }
     toSwap.clear();
     setrandcolor();
-	  checkNeighbors();
+	checkNeighbors();
     printCells();
 }
 
