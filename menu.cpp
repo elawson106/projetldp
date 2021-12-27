@@ -47,7 +47,7 @@ class Button {
 		return p.x >= center.x && p.x <= center.x + w && p.y >= center.y && p.y <= center.y + h;
 	};
 
-	void callback(){
+	int callback(){
 		if(type == nivSelector){
 			cout << 111 << endl;
 		}else if(type == nivModificator){
@@ -108,6 +108,7 @@ class Canvas {
 	public:
 	Canvas();
 	void init();
+	void init_selector();
 	void draw();
 	void test(Fl_Button*, void*);
 	void mouseMove(Point mouseLoc);
@@ -151,7 +152,7 @@ void Canvas::keyPressed(int i) {}
 class MainWindow : public Fl_Window {
   Canvas canvas;
  public:
-  MainWindow() : Fl_Window(500, 50, 500, 500, "Menu Principal") {
+  MainWindow() : Fl_Window(500, 50, 500, 500, "Menu principal") {
     Fl::add_timeout(1.0/60, Timer_CB, this);
     //resizable(this);
   }
@@ -188,7 +189,6 @@ main
 Do not edit!!!!
 
 --------------------------------------------------*/
-
 
 int main(int argc, char *argv[]) {
   srand(time(0));
