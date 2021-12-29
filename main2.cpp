@@ -289,6 +289,11 @@ void Img_vector::add(int color) {
         png_img = new Fl_PNG_Image("Images/bonbon/tile033.png");
         images.push_back({18, png_img});
         break;
+	case 40:
+		cout << "MUR" << endl;
+		png_img = new Fl_PNG_Image("Images/Misc/mur.png");
+        images.push_back({40, png_img});
+        break;
               
       default:
         break;
@@ -516,7 +521,7 @@ class Animation {
 
 			if(animationType == swap || animationType == newBonbon){
 				if(coord_base.x != base2_supposed.x || coord_base.y != base2_supposed.y){
-					cout << "base2 : " << coord_base.x <<  ":" << base2_supposed.x << " - " << coord_base.y << ":" << base2_supposed.y << endl;
+					//cout << "base2 : " << coord_base.x <<  ":" << base2_supposed.x << " - " << coord_base.y << ":" << base2_supposed.y << endl;
 					coord_base2 = base2_supposed;
 				} 
 
@@ -780,6 +785,7 @@ Canvas::Canvas() {
       getline(file, niveau);
       elem = 0;
       for (int y = 0; y<9; y++){
+		  cout << "Niveau elem : " << (niveau[elem] - '0') << endl;
         b_type = niveau[elem] - '0';
         images.add(b_type);
         id = y + ((x * 9));
@@ -871,7 +877,9 @@ void Canvas::mouseMove(Point mouseLoc) {
 void Canvas::mouseDrag(Point mouseLoc) {
 	for (auto &v: cells)
 		for (auto &c: v)
-			c.mouseDrag(mouseLoc);
+			if(c.getTypeColor() != 40){
+				c.mouseDrag(mouseLoc);
+			}
 }
 
 void Canvas::mouseRelease(){
@@ -883,7 +891,7 @@ void Canvas::mouseRelease(){
 				c.setclicked(False);
 				Point center_base = {100*c.getY()+50, 100*c.getX()+150};
 				for(Cell* nei : c.getNeighbors()){
-					if(nei->getRect().contains(c.getRect().getCenter())){ 
+					if(nei->getRect().contains(c.getRect().getCenter()) && nei->getTypeColor() != 40){ 
 						ImageBonbon ib_1 = c.getRect().getImageBonbon();
 						ImageBonbon ib_2 = nei->getRect().getImageBonbon();
 						Point coord_1 = c.getCoord();
@@ -1004,22 +1012,48 @@ void Canvas::swapUP(){
 		}
 	}
 	for(auto cc : test){
+		cout << "NOUVEAUX CYCLES -------------" << endl;
+		bool y_changed = False;
 		int x_now = cc->getX();
+		int y_now = cc->getY();
+		int y_temp = cc->getY();
 		while (x_now > 0)
 		{
 			x_now--;
-			CTS cts = {cells[x_now+1][cc->getY()].getRect().getCenter(), cells[x_now][cc->getY()].getRect().getCenter(),
-			cells[x_now+1][cc->getY()].getRect().getImageBonbon(), cells[x_now][cc->getY()].getRect().getImageBonbon(),
-			cells[x_now+1][cc->getY()].getCoord(), cells[x_now][cc->getY()].getCoord(),
-			cells[x_now+1][cc->getY()].getTypeColor(), cells[x_now][cc->getY()].getTypeColor()};
-			cout << "UPPPPPPPPPPP" << endl;
-			if(cells[cc->getX()][cc->getY()].getAnim()){
-				Fl::wait();
-				switchCells(cts);
-				cout << "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDddd " << endl;
-			}else{
-				switchCells(cts);
-			}	
+			if(cells[x_now][y_now].getTypeColor() != 40 && cells[x_now+1][y_now].getTypeColor() != 40){
+				CTS cts = {cells[x_now+1][y_now].getRect().getCenter(), cells[x_now][y_now].getRect().getCenter(),
+				cells[x_now+1][y_now].getRect().getImageBonbon(), cells[x_now][y_now].getRect().getImageBonbon(),
+				cells[x_now+1][y_now].getCoord(), cells[x_now][y_now].getCoord(),
+				cells[x_now+1][y_now].getTypeColor(), cells[x_now][y_now].getTypeColor()};
+				if(cells[cc->getX()][cc->getY()].getAnim()){
+					Fl::wait();
+					switchCells(cts);
+				}else{
+					switchCells(cts);
+				}	
+			}else if(cells[x_now][y_now].getTypeColor() == 40){
+				cout << "PREMIER CHANGEMENTTTTTTTTTTTTTT" << endl;
+				CTS cts;
+				if(y_now - 1 >= 0 && cells[x_now+1][y_now-1].getTypeColor() != 40){
+					cts = {cells[x_now+1][y_now].getRect().getCenter(), cells[x_now][y_now-1].getRect().getCenter(),
+					cells[x_now+1][y_now].getRect().getImageBonbon(), cells[x_now][y_now-1].getRect().getImageBonbon(),
+					cells[x_now+1][y_now].getCoord(), cells[x_now][y_now-1].getCoord(),
+					cells[x_now+1][y_now].getTypeColor(), cells[x_now][y_now-1].getTypeColor()};
+					y_now--;
+				}else{
+					cts = {cells[x_now+1][y_now].getRect().getCenter(), cells[x_now][y_now+1].getRect().getCenter(),
+					cells[x_now+1][y_now].getRect().getImageBonbon(), cells[x_now][y_now+1].getRect().getImageBonbon(),
+					cells[x_now+1][y_now].getCoord(), cells[x_now][y_now+1].getCoord(),
+					cells[x_now+1][y_now].getTypeColor(), cells[x_now][y_now+1].getTypeColor()};
+					y_now++;
+				}
+				if(cells[x_now][y_now].getAnim()){
+					Fl::wait();
+					switchCells(cts);
+				}else{
+					switchCells(cts);
+				}	
+			}
 		}
 		
 	}
