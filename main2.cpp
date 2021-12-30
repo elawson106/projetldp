@@ -166,9 +166,9 @@ bool Recurrence::isPouf(){
     // return true si il y a eu une chaine >= 3 dans le vecteur
     bool pouf = false;
     for(auto &elem : recu){
-		if(elem.amount >= 3 && elem.color != 40){
-        	pouf = True;
-		}
+			if(elem.amount >= 3){
+        pouf = True;
+			}
     }
     return pouf;
 }
@@ -288,11 +288,6 @@ void Img_vector::add(int color) {
       case 18:
         png_img = new Fl_PNG_Image("Images/bonbon/tile033.png");
         images.push_back({18, png_img});
-        break;
-	case 40:
-		cout << "MUR" << endl;
-		png_img = new Fl_PNG_Image("Images/Misc/mur.png");
-        images.push_back({40, png_img});
         break;
               
       default:
@@ -439,7 +434,6 @@ class Cell {
 	bool clicked = False;
 	bool dragged_x = False;
 	bool dragged_y = False;
-	bool blocked_by_wall = False;
 	vector<Cell *> neighbors;
 	Animation* anim;
 
@@ -453,7 +447,6 @@ class Cell {
 	void setclicked(bool value){clicked = value;}
 	void setDraggedX(bool value){dragged_x = value;}
 	void setDraggedY(bool value){dragged_y = value;}
-	void setBlocked(bool value){blocked_by_wall = value;}
 	void setNeighbors(const vector<Cell *> newNeighbors) {
 	neighbors = newNeighbors;
 	}
@@ -475,7 +468,6 @@ class Cell {
 	bool isClicked(){return clicked;}
 	bool isDragged_X(){return dragged_x;}
 	bool isDragged_Y(){return dragged_y;}
-	bool isBlocked(){return blocked_by_wall;}
 
 	vector<Cell *> getNeighbors(){return neighbors;}
 
@@ -524,7 +516,7 @@ class Animation {
 
 			if(animationType == swap || animationType == newBonbon){
 				if(coord_base.x != base2_supposed.x || coord_base.y != base2_supposed.y){
-					//cout << "base2 : " << coord_base.x <<  ":" << base2_supposed.x << " - " << coord_base.y << ":" << base2_supposed.y << endl;
+					cout << "base2 : " << coord_base.x <<  ":" << base2_supposed.x << " - " << coord_base.y << ":" << base2_supposed.y << endl;
 					coord_base2 = base2_supposed;
 				} 
 
@@ -660,19 +652,28 @@ void Cell::mouseMove(Point mouseLoc) {
 
 void Cell::mouseDrag(Point mouseLoc){
 	if(isClicked()){
-		cout << "MouseLoc - " << mouseLoc.x << ":" << mouseLoc.y << " - " << r.getCenter().x << ":" << r.getCenter().y << endl;
-		if(!isDragged_X() && !isDragged_Y()){
-			if(mouseLoc.x + 30 < r.getCenter().x || mouseLoc.x - 30 > r.getCenter().x){
-				setDraggedX(True);
-			}else if(mouseLoc.y + 30 < r.getCenter().y || mouseLoc.y - 30 > r.getCenter().y){
-				setDraggedY(True);
+		Point point_base = {100*getY()+50, 100*getX()+150};
+		int diff_x = point_base.x - mouseLoc.x;
+		int diff_y = point_base.y - mouseLoc.y;
+		
+		if(diff_x < 0){diff_x = -diff_x;}
+		if(diff_y < 0){diff_y = -diff_y;}
+
+		if(diff_x <= 100 && diff_y <= 100){
+			cout << "MouseLoc - " << mouseLoc.x << ":" << mouseLoc.y << " - " << r.getCenter().x << ":" << r.getCenter().y << endl;
+			if(!isDragged_X() && !isDragged_Y()){
+				if(mouseLoc.x + 30 < r.getCenter().x || mouseLoc.x - 30 > r.getCenter().x){
+					setDraggedX(True);
+				}else if(mouseLoc.y + 30 < r.getCenter().y || mouseLoc.y - 30 > r.getCenter().y){
+					setDraggedY(True);
+				}
+			}else if(isDragged_X()){
+				r.setCenter({mouseLoc.x, r.getCenter().y});
+				r.getImageBonbon().box->position(mouseLoc.x - 50, r.getImageBonbon().box->y());
+			}else if(isDragged_Y()){
+				r.setCenter({r.getCenter().x, mouseLoc.y});
+				r.getImageBonbon().box->position(r.getImageBonbon().box->x(), mouseLoc.y - 50);
 			}
-		}else if(isDragged_X()){
-			r.setCenter({mouseLoc.x, r.getCenter().y});
-			r.getImageBonbon().box->position(mouseLoc.x - 50, r.getImageBonbon().box->y());
-		}else if(isDragged_Y()){
-			r.setCenter({r.getCenter().x, mouseLoc.y});
-			r.getImageBonbon().box->position(r.getImageBonbon().box->x(), mouseLoc.y - 50);
 		}
 	}
 }
@@ -750,6 +751,7 @@ class Canvas {
   void checkNeighbors();
   void checkNeighborsX();
   void checkNeighborsY();
+  bool canMoveBonbon(Recurrence recurrence);
   void pouf(Recurrence recurrence);
   bool setNulls();
   void swapUP();
@@ -761,7 +763,7 @@ class Canvas {
   bool isBlank(){
 	for (auto &v: cells)
 		for (auto &c: v){
-			if(c.getRect().getImageBonbon().box->image() == images.blank() && !c.isBlocked())return True;
+			if(c.getRect().getImageBonbon().box->image() == images.blank())return True;
 	}
 	return False;
   }
@@ -788,7 +790,6 @@ Canvas::Canvas() {
       getline(file, niveau);
       elem = 0;
       for (int y = 0; y<9; y++){
-		  cout << "Niveau elem : " << (niveau[elem] - '0') << endl;
         b_type = niveau[elem] - '0';
         images.add(b_type);
         id = y + ((x * 9));
@@ -833,9 +834,10 @@ void Canvas::draw() {
 						ImageBonbon ib_1 = c.getRect().getImageBonbon();
 						ImageBonbon ib_2 = n->getRect().getImageBonbon();
 						Point coord_1 = c.getCoord();
-						Point coord_2 = n->getCoord();
-						cout << "okey" << endl;
-						cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
+								Point coord_2 = n->getCoord();
+					cout << "okey" << endl;
+
+								cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
 					}
 				}
 				isPassed = False;
@@ -879,9 +881,7 @@ void Canvas::mouseMove(Point mouseLoc) {
 void Canvas::mouseDrag(Point mouseLoc) {
 	for (auto &v: cells)
 		for (auto &c: v)
-			if(c.getTypeColor() != 40){
-				c.mouseDrag(mouseLoc);
-			}
+			c.mouseDrag(mouseLoc);
 }
 
 void Canvas::mouseRelease(){
@@ -893,7 +893,7 @@ void Canvas::mouseRelease(){
 				c.setclicked(False);
 				Point center_base = {100*c.getY()+50, 100*c.getX()+150};
 				for(Cell* nei : c.getNeighbors()){
-					if(nei->getRect().contains(c.getRect().getCenter()) && nei->getTypeColor() != 40){ 
+					if(nei->getRect().contains(c.getRect().getCenter())){ 
 						ImageBonbon ib_1 = c.getRect().getImageBonbon();
 						ImageBonbon ib_2 = nei->getRect().getImageBonbon();
 						Point coord_1 = c.getCoord();
@@ -969,7 +969,7 @@ void Canvas::setrandcolor(){
 		//Application de l'animation d'apparition aux nouvelles cells
 		for(auto &v : cells){
 			for (auto &c : v){
-				if (c.getTypeColor() == 0 && cells[c.getX()-1][c.getY()].getTypeColor() != 40){
+				if (c.getTypeColor() == 0){
 					int randColor = (rand() % 6) + 1;
 					c.setTypeColor(randColor);
 					Point center_base = {100*c.getY()+50, 100*c.getX()+150};
@@ -992,7 +992,7 @@ bool Canvas::setNulls(){
     for (auto &v: cells)
         for (auto &c: v){
 			//cout << "genou" << endl;
-          if (c.getRect().getImageBonbon().box->image() == images.blank() && c.getTypeColor() != 0)
+          if (c.getRect().getImageBonbon().box->image() == images.blank())
           {
             c.setTypeColor(0);
 			cout << "IMG - " << c.getId() << " - " << c.getTypeColor() << endl; 
@@ -1008,59 +1008,28 @@ void Canvas::swapUP(){
 	vector<Cell *>  test;
 	for(auto &v : cells){
 		for (auto &c : v){
-			if(c.getRect().getImageBonbon().box->image() == images.blank() && !c.isBlocked()){
+			if(c.getRect().getImageBonbon().box->image() == images.blank()){
 				test.push_back(&c);
 			}
 		}
 	}
 	for(auto cc : test){
-		cout << "NOUVEAUX CYCLES -------------" << endl;
-		bool y_changed = False;
 		int x_now = cc->getX();
-		int y_now = cc->getY();
-		int y_temp = cc->getY();
 		while (x_now > 0)
 		{
 			x_now--;
-			if(cells[x_now][y_now].getTypeColor() == 40 && cells[x_now][y_now-1].getTypeColor() == 40 && cells[x_now][y_now+1].getTypeColor() == 40){
-				cc->setBlocked(True);
-			}else if(cells[x_now][y_now].getTypeColor() != 40 && cells[x_now+1][y_now].getTypeColor() != 40 && !cells[x_now][y_now].isBlocked() && !cells[x_now+1][y_now].isBlocked()){
-				CTS cts = {cells[x_now+1][y_now].getRect().getCenter(), cells[x_now][y_now].getRect().getCenter(),
-				cells[x_now+1][y_now].getRect().getImageBonbon(), cells[x_now][y_now].getRect().getImageBonbon(),
-				cells[x_now+1][y_now].getCoord(), cells[x_now][y_now].getCoord(),
-				cells[x_now+1][y_now].getTypeColor(), cells[x_now][y_now].getTypeColor()};
-				if(cells[cc->getX()][cc->getY()].getAnim()){
-					Fl::wait();
-					switchCells(cts);
-				}else{
-					switchCells(cts);
-				}	
-			}else if(cells[x_now][y_now].getTypeColor() == 40 || cells[x_now][y_now].getTypeColor() == 0){
-				CTS cts;
-				if(y_now - 1 >= 0 && (cells[x_now][y_now-1].getTypeColor() != 40 && cells[x_now][y_now-1].getTypeColor() != 0)){
-					cout << "PAPAPAPAPAPAP - CELL1 - " << cells[x_now+1][y_now].getId() << " - CELL2 - " << cells[x_now][y_now-1].getId() << endl;
-					cts = {cells[x_now+1][y_now].getRect().getCenter(), cells[x_now][y_now-1].getRect().getCenter(),
-					cells[x_now+1][y_now].getRect().getImageBonbon(), cells[x_now][y_now-1].getRect().getImageBonbon(),
-					cells[x_now+1][y_now].getCoord(), cells[x_now][y_now-1].getCoord(),
-					cells[x_now+1][y_now].getTypeColor(), cells[x_now][y_now-1].getTypeColor()};
-					y_now--;
-				}else if(y_now + 1 <= 8 && (cells[x_now][y_now+1].getTypeColor() != 40 && cells[x_now][y_now+1].getTypeColor() != 0)){
-					cout << "PAPAPAPAPAPAP - CELL1 - " << cells[x_now+1][y_now].getId() << " - CELL2 - " << cells[x_now][y_now+1].getId() << endl;
-					cts = {cells[x_now+1][y_now].getRect().getCenter(), cells[x_now][y_now+1].getRect().getCenter(),
-					cells[x_now+1][y_now].getRect().getImageBonbon(), cells[x_now][y_now+1].getRect().getImageBonbon(),
-					cells[x_now+1][y_now].getCoord(), cells[x_now][y_now+1].getCoord(),
-					cells[x_now+1][y_now].getTypeColor(), cells[x_now][y_now+1].getTypeColor()};
-					y_now++;
-				}else{
-					cout << "PAR ICIIIIIIIIIIII" << endl;
-				}
-				if(cells[x_now][y_now].getAnim()){
-					Fl::wait();
-					switchCells(cts);
-				}else{
-					switchCells(cts);
-				}	
-			}
+			CTS cts = {cells[x_now+1][cc->getY()].getRect().getCenter(), cells[x_now][cc->getY()].getRect().getCenter(),
+			cells[x_now+1][cc->getY()].getRect().getImageBonbon(), cells[x_now][cc->getY()].getRect().getImageBonbon(),
+			cells[x_now+1][cc->getY()].getCoord(), cells[x_now][cc->getY()].getCoord(),
+			cells[x_now+1][cc->getY()].getTypeColor(), cells[x_now][cc->getY()].getTypeColor()};
+			cout << "UPPPPPPPPPPP" << endl;
+			if(cells[cc->getX()][cc->getY()].getAnim()){
+				Fl::wait();
+				switchCells(cts);
+				cout << "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDddd " << endl;
+			}else{
+				switchCells(cts);
+			}	
 		}
 		
 	}
@@ -1123,6 +1092,7 @@ void Canvas::checkNeighborsX(){
       if (recurrence.isPouf()){
         pouf(recurrence);
       }
+	  canMoveBonbon(recurrence);
   }
 }
 
@@ -1147,13 +1117,85 @@ void Canvas::checkNeighborsY(){
       if (recurrence.isPouf()){
         pouf(recurrence);
       }
+	  canMoveBonbon(recurrence);
   }
+}
+
+bool Canvas::canMoveBonbon(Recurrence recurrence){
+	int sizeVec = recurrence.getVec().size();
+	int counter = 0;
+	for(int i = 0; i < sizeVec; i++){
+		if(i >= 2){
+			counter = i - 2;
+			if(recurrence.getVec()[i].color == recurrence.getVec()[counter].color) {
+				if(recurrence.getVec()[i].amount + recurrence.getVec()[counter].amount >= 3){
+					return True;
+				}else if(recurrence.getVec()[i].amount + recurrence.getVec()[counter].amount >= 2){
+					Point b1 = recurrence.getVec()[counter].start;
+					Point b2 = recurrence.getVec()[i].start;
+					if(b1.x == b2.x){
+						if(b1.x != 0 && b2.x != 8){
+							for (auto &shift: vector<Point>({{ -1, 1},{ 1, 1}})) {
+								int x = b1.x + shift.x;
+								int y = b1.y + shift.y;
+								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+									return True;
+								}
+							}
+						}else if(b1.x == 0){
+							for (auto &shift: vector<Point>({{ 1, 1}})) {
+								int x = b1.x + shift.x;
+								int y = b1.y + shift.y;
+								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+									return True;
+								}
+							}
+						}else if(b2.x == 8){
+							for (auto &shift: vector<Point>({{ -1, -1}})) {
+								int x = b2.x + shift.x;
+								int y = b2.y + shift.y;
+								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+									return True;
+								}
+							}
+						}
+					}else{
+						if(b1.y != 0 && b2.y != 8){
+							for (auto &shift: vector<Point>({{ -1, 1},{ 1, 1}})) {
+								int x = b1.x + shift.x;
+								int y = b1.y + shift.y;
+								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+									return True;
+								}
+							}
+						}else if(b1.y == 0){
+							for (auto &shift: vector<Point>({{ 1, 1}})) {
+								int x = b1.x + shift.x;
+								int y = b1.y + shift.y;
+								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+									return True;
+								}
+							}
+						}else if(b2.y == 8){
+							for (auto &shift: vector<Point>({{ -1, -1}})) {
+								int x = b2.x + shift.x;
+								int y = b2.y + shift.y;
+								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+									return True;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void Canvas::pouf(Recurrence recurrence){
     //mets les images de toutes les cells en caine de min 3 a blank (implémenter explosion)
     for (auto &count : recurrence.getVec()){
-      if(count.amount >= 3 && count.color != 40){
+      if(count.amount >= 3){
         for(int i = count.start.x; i <= count.finish.x; i++){
           for(int j = count.start.y; j <= count.finish.y; j++){
             if(!cells[i][j].getAnim() && !inRec({i, j})){
@@ -1168,6 +1210,7 @@ void Canvas::pouf(Recurrence recurrence){
       }
     }
     addscore(toSwap.size());
+	cout << toSwap.size() << endl;
 }
 
 bool Canvas::inRec(Point p_){
