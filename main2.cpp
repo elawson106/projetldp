@@ -733,6 +733,8 @@ class Canvas {
   int score = 0;
   int highscore;
   Img_vector images;
+	vector<Point> cts_temp_save;
+	bool canMoveBool = False;
 
   bool inAnim = False;
  public:
@@ -819,40 +821,12 @@ void Canvas::initBG(){
 void Canvas::draw() {
 	Text(to_string(highscore), {850, 50}, 20).draw();
 	Text(to_string(score), {100, 50}, 20).draw();
-	bool isPassed = False;
-	bool switched = False;
-	bool temp_anim;
-	CTS cts;
 	for (auto &v: cells)
 		for (auto &c: v){
-			if(!isPassed && c.isClicked()){
-				isPassed = True;
-			}else if(c.isClicked()){
-				for (auto &n : c.getNeighbors()){
-					if(c.isClicked() && n->isClicked()){
-						switched = True;
-						ImageBonbon ib_1 = c.getRect().getImageBonbon();
-						ImageBonbon ib_2 = n->getRect().getImageBonbon();
-						Point coord_1 = c.getCoord();
-								Point coord_2 = n->getCoord();
-					cout << "okey" << endl;
-
-								cts = {c.getRect().getCenter(), n->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), n->getTypeColor()};
-					}
-				}
-				isPassed = False;
-			}
-			if (switched && !isAnimated())
-			{
-				switchCells(cts);
-				resetClicks();
-				//checkNeighbors();
-			}
 			c.draw();
 		}
 
 	if(!isAnimated() && !isBlank()){
-		//cout << "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDdd" << endl;
 		checkNeighbors();
 	}else if(!isAnimated() && isBlank()){
 		cout << "ododod" << endl;
@@ -900,6 +874,8 @@ void Canvas::mouseRelease(){
 						Point coord_2 = nei->getCoord();
 						CTS cts = {c.getRect().getCenter(), nei->getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c.getTypeColor(), nei->getTypeColor()};
 						switchCells(cts);
+						cts_temp_save.push_back(coord_1);
+						cts_temp_save.push_back(coord_2);
 						hasSwitch = True;
 					}
 				}
@@ -1061,12 +1037,28 @@ void Canvas::updateNeighbors(){
 
 void Canvas::checkNeighbors(){
 	if(!inAnim){
+		canMoveBool = False;
 		checkNeighborsX();
 		checkNeighborsY();
-		if (setNulls())
-		{
+		if (setNulls()){
 			swapUP();
 			toSwap.clear();
+			cts_temp_save.clear();
+		}else if(cts_temp_save.size() != 0){
+			if(!cells[cts_temp_save[0].x][cts_temp_save[0].y].getAnim() && !cells[cts_temp_save[1].x][cts_temp_save[1].y].getAnim()){
+				Cell c1 = cells[cts_temp_save[0].x][cts_temp_save[0].y];
+				Cell c2 = cells[cts_temp_save[1].x][cts_temp_save[1].y];
+				ImageBonbon ib_1 = c1.getRect().getImageBonbon();
+				ImageBonbon ib_2 = c2.getRect().getImageBonbon();
+				Point coord_1 = c1.getCoord();
+				Point coord_2 = c2.getCoord();
+				CTS cts = {c1.getRect().getCenter(), c2.getRect().getCenter(), ib_1, ib_2, coord_1, coord_2, c1.getTypeColor(), c2.getTypeColor()};
+				switchCells(cts);
+				cts_temp_save.clear();
+			}
+		}
+		if(!canMoveBool){
+			cout << "can't move" << endl;
 		}
 	}
 }
@@ -1092,7 +1084,9 @@ void Canvas::checkNeighborsX(){
       if (recurrence.isPouf()){
         pouf(recurrence);
       }
-	  canMoveBonbon(recurrence);
+	  if(canMoveBonbon(recurrence)){
+		  canMoveBool = True;
+	  }
   }
 }
 
@@ -1117,28 +1111,33 @@ void Canvas::checkNeighborsY(){
       if (recurrence.isPouf()){
         pouf(recurrence);
       }
-	  canMoveBonbon(recurrence);
+	  if(canMoveBonbon(recurrence)){
+		  canMoveBool = True;
+	  }
   }
 }
 
 bool Canvas::canMoveBonbon(Recurrence recurrence){
-	int sizeVec = recurrence.getVec().size();
+	vector< vector<Point> > cp_possible;
+	vector<RecurCount> vecteur = recurrence.getVec();
+	int sizeVec = vecteur.size();
 	int counter = 0;
 	for(int i = 0; i < sizeVec; i++){
 		if(i >= 2){
 			counter = i - 2;
-			if(recurrence.getVec()[i].color == recurrence.getVec()[counter].color) {
-				if(recurrence.getVec()[i].amount + recurrence.getVec()[counter].amount >= 3){
+			if(vecteur[i].color == vecteur[counter].color) {
+				if(vecteur[i].amount + vecteur[counter].amount >= 3){
 					return True;
-				}else if(recurrence.getVec()[i].amount + recurrence.getVec()[counter].amount >= 2){
-					Point b1 = recurrence.getVec()[counter].start;
-					Point b2 = recurrence.getVec()[i].start;
+				}else if(vecteur[i].amount + vecteur[counter].amount >= 2){
+					Point b1 = vecteur[counter].start;
+					Point b2 = vecteur[i].start;
 					if(b1.x == b2.x){
 						if(b1.x != 0 && b2.x != 8){
 							for (auto &shift: vector<Point>({{ -1, 1},{ 1, 1}})) {
 								int x = b1.x + shift.x;
 								int y = b1.y + shift.y;
-								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+								if(cells[x][y].getTypeColor() == vecteur[counter].color){
+									
 									return True;
 								}
 							}
@@ -1146,7 +1145,7 @@ bool Canvas::canMoveBonbon(Recurrence recurrence){
 							for (auto &shift: vector<Point>({{ 1, 1}})) {
 								int x = b1.x + shift.x;
 								int y = b1.y + shift.y;
-								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+								if(cells[x][y].getTypeColor() == vecteur[counter].color){
 									return True;
 								}
 							}
@@ -1154,7 +1153,7 @@ bool Canvas::canMoveBonbon(Recurrence recurrence){
 							for (auto &shift: vector<Point>({{ -1, -1}})) {
 								int x = b2.x + shift.x;
 								int y = b2.y + shift.y;
-								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+								if(cells[x][y].getTypeColor() == vecteur[counter].color){
 									return True;
 								}
 							}
@@ -1164,7 +1163,7 @@ bool Canvas::canMoveBonbon(Recurrence recurrence){
 							for (auto &shift: vector<Point>({{ -1, 1},{ 1, 1}})) {
 								int x = b1.x + shift.x;
 								int y = b1.y + shift.y;
-								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+								if(cells[x][y].getTypeColor() == vecteur[counter].color){
 									return True;
 								}
 							}
@@ -1172,7 +1171,7 @@ bool Canvas::canMoveBonbon(Recurrence recurrence){
 							for (auto &shift: vector<Point>({{ 1, 1}})) {
 								int x = b1.x + shift.x;
 								int y = b1.y + shift.y;
-								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+								if(cells[x][y].getTypeColor() == vecteur[counter].color){
 									return True;
 								}
 							}
@@ -1180,7 +1179,7 @@ bool Canvas::canMoveBonbon(Recurrence recurrence){
 							for (auto &shift: vector<Point>({{ -1, -1}})) {
 								int x = b2.x + shift.x;
 								int y = b2.y + shift.y;
-								if(cells[x][y].getTypeColor() == recurrence.getVec()[counter].color){
+								if(cells[x][y].getTypeColor() == vecteur[counter].color){
 									return True;
 								}
 							}
@@ -1190,7 +1189,9 @@ bool Canvas::canMoveBonbon(Recurrence recurrence){
 			}
 		}
 	}
+	return False;
 }
+
 
 void Canvas::pouf(Recurrence recurrence){
     //mets les images de toutes les cells en caine de min 3 a blank (implémenter explosion)
